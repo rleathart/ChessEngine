@@ -65,27 +65,6 @@ char* get_dotnet_pipe_name(char* name)
 
 char* sockname = "ChessIPC";
 
-ipcError socket_connect_check(Socket* sock)
-{
-  if (!(sock->state.flags & SocketConnected))
-    return 1;
-#ifdef _WIN32
-  ReadFile(sock->server, NULL, 0, NULL, NULL);
-  DWORD lasterr = GetLastError();
-  switch (lasterr)
-  {
-  case ERROR_PIPE_NOT_CONNECTED:
-  case ERROR_BROKEN_PIPE:
-  case ERROR_NO_DATA:
-    printf("Error: %lu %s\n", lasterr, win32err(lasterr));
-    return 1;
-  }
-#else
-#endif
-
-  return ipcErrorNone;
-}
-
 /* Return a random int between lower and upper inclusive. */
 int randrange(int lower, int upper)
 {
