@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
+#include <time.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -30,6 +32,19 @@ void move_print(Move move)
          move.to[1]);
 }
 
+void sleep_ms(int ms)
+{
+#ifdef _WIN32
+  sleep_ms(ms);
+#else
+  struct timespec ts = {
+    .tv_sec = ms / 1000,
+    .tv_nsec = (ms % 1000) * 1e6,
+  };
+  nanosleep(&ts, NULL);
+#endif
+}
+
 char* get_dotnet_pipe_name(char* name)
 {
   char* pipename = calloc(1, 4096);
@@ -49,18 +64,6 @@ char* get_dotnet_pipe_name(char* name)
 }
 
 char* sockname = "ChessIPC";
-
-char* win32err(DWORD err)
-{
-  char* lpMsgBuf;
-  DWORD bufLen = FormatMessageA(
-      FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
-          FORMAT_MESSAGE_IGNORE_INSERTS,
-      NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf,
-      0, NULL);
-  lpMsgBuf[strlen(lpMsgBuf) - 1] = '\0';
-  return lpMsgBuf;
-}
 
 ipcError socket_connect_check(Socket* sock)
 {
@@ -294,7 +297,7 @@ int main(int argc, char* argv[])
     while ((err = socket_connect(&sock)))
     {
       /* fprintf(stderr, "Error[%d]: %s\n", err, ipcError_str(err)); */
-      Sleep(200);
+      sleep_ms(200);
     }
     /* printf("%d\n", socket_is_connected(&sock)); */
     printf("Got connection\n");
@@ -308,7 +311,7 @@ int main(int argc, char* argv[])
       }
       while (socket_read_bytes(&sock, &move, sizeof(move)) ==
              ipcErrorSocketHasMoreData)
-        Sleep(10);
+        sleep_ms(10);
 
       move_print(move);
       board_update(&board, &move);
@@ -318,7 +321,7 @@ int main(int argc, char* argv[])
       move_print(server_move);
       while (socket_write_bytes(&sock, &server_move, sizeof(move)) ==
              ipcErrorSocketHasMoreData)
-        Sleep(10);
+        sleep_ms(10);
       board_update(&board, &server_move);
       board_print(&board);
     }
