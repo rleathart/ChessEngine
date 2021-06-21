@@ -93,11 +93,11 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves)
   if (board[pos] & ChessPiecePawn)
   {
     bool isWhite = board[pos] & ChessPieceIsWhite;
-    if (isWhite && torank64(pos) == 6 && CanMoveTo(pos - 16))
+    if (isWhite && torank64(pos) == 6 && board[pos - 16] == ChessPieceNone)
     {
       AddMove(move_new(pos, pos - 16));
     }
-    if (!isWhite && torank64(pos) == 1 && CanMoveTo(pos + 16))
+    if (!isWhite && torank64(pos) == 1 && board[pos + 16] == ChessPieceNone)
     {
       AddMove(move_new(pos, pos + 16));
     }
