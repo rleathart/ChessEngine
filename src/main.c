@@ -3,6 +3,7 @@
 
 #include "defs.h"
 #include "matrix.h"
+#include "message.h"
 #include "move.h"
 #include "util.h"
 
@@ -23,7 +24,7 @@
  */
 
 int minimax(Board board, size_t depth, s64 alpha, s64 beta,
-            bool maximising_player)
+            bool maximising_player, bool is_initial_call, Move* out_move)
 {
   int rv = 0;
   if (depth == 0)
@@ -31,11 +32,9 @@ int minimax(Board board, size_t depth, s64 alpha, s64 beta,
     // How many pieces does each player have?
     for (int i = 0; i < 64; i++)
     {
-      if (board.state[i] &&
-          (board.state[i] & ChessPieceIsWhite))
+      if (board.state[i] && (board.state[i] & ChessPieceIsWhite))
         rv++;
-      if (board.state[i] &&
-          !(board.state[i] & ChessPieceIsWhite))
+      if (board.state[i] && !(board.state[i] & ChessPieceIsWhite))
         rv--;
     }
     return rv;
@@ -45,17 +44,30 @@ int minimax(Board board, size_t depth, s64 alpha, s64 beta,
   Board new_board = board;
   Move* moves;
   size_t nmoves = 0;
-  board_get_moves_all(board, &moves, &nmoves, maximising_player ? GetMovesWhite : GetMovesBlack);
+  board_get_moves_all(board, &moves, &nmoves,
+                      maximising_player ? GetMovesWhite : GetMovesBlack);
   for (size_t i = 0; i < nmoves; i++)
   {
     board_update(&new_board, &(moves[i]));
-    int eval = minimax(new_board, depth - 1, alpha, beta, !maximising_player);
+    int eval = minimax(new_board, depth - 1, alpha, beta, !maximising_player,
+                       false, NULL);
     new_board = board; // Restore board state after trying a move
+    int last_best_eval = best_eval;
     best_eval = maximising_player ? max(best_eval, eval) : min(best_eval, eval);
     if (maximising_player)
+    {
       alpha = max(alpha, eval);
+      if (best_eval > last_best_eval && is_initial_call)
+        if (out_move)
+          *out_move = moves[i];
+    }
     else
+    {
       beta = min(beta, eval);
+      if (best_eval < last_best_eval && is_initial_call)
+        if (out_move)
+          *out_move = moves[i];
+    }
     if (beta <= alpha)
       break;
   }
@@ -71,15 +83,17 @@ int main(int argc, char* argv[])
   Move move = {};
   Socket sock;
   Board board;
-  board_new(&board,
-             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+  board_new(&board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
   printf("%s\n", board_tostring(board));
   bool isWhitesTurn = true;
 
   Move* moves;
   size_t nmoves;
 
-  printf("minimax: %d\n", minimax(board, 2, -INT_MAX, INT_MAX, true));
+  Move best_move;
+  printf("minimax: %d\n",
+         minimax(board, 7, -INT_MAX, INT_MAX, true, true, &best_move));
+  printf("Best move: %s\n", move_tostring(best_move));
   socket_init(&sock, get_dotnet_pipe_name(sockname), SocketServer);
   for (;;)
   {
@@ -103,14 +117,20 @@ int main(int argc, char* argv[])
       board_update(&board, &move);
       isWhitesTurn = !isWhitesTurn;
 
-      Move server_move =
-          move_get_random(board, isWhitesTurn ? GetMovesWhite : GetMovesBlack);
+      Move server_move;
+      minimax(board, 7, -INT_MAX, INT_MAX, isWhitesTurn, true, &server_move);
 
       printf("Server move: %s\n", move_tostring(server_move));
       while (socket_write_bytes(&sock, &server_move, sizeof(move)) ==
              ipcErrorSocketHasMoreData)
         sleep_ms(10);
       isWhitesTurn = !isWhitesTurn;
+
+      // Test code for Message passing between client/server
+      /* void* buf; */
+      /* size_t buflen = 0; */
+      /* message_receive(&sock, &buf, &buflen); */
+      /* printf("Got message %d\n", *(char*)buf); */
 
       board_update(&board, &server_move);
       printf("%s\n", board_tostring(board));
