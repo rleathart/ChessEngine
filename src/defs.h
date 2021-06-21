@@ -11,6 +11,14 @@ typedef int16_t s16;
 typedef int32_t s32;
 typedef int64_t s64;
 
+typedef u8 byte;
+
+typedef struct
+{
+  u32 lengthInBytes;
+  byte* data;
+} Message;
+
 typedef enum
 {
   ChessPieceNone = 0,

@@ -26,6 +26,7 @@ set(SRC
   src/piece.c
   src/move.c
   src/board.c
+  src/message.c
   )
 
 add_executable(${PROJECT_NAME} ${SRC})
