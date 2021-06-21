@@ -5,7 +5,7 @@ project(main C)
 
 find_package(ipc REQUIRED)
 
-set(SRC src/main.c)
+set(SRC src/main.c src/matrix.c)
 
 add_executable(${PROJECT_NAME} ${SRC})
 target_link_libraries(${PROJECT_NAME} ipc)
