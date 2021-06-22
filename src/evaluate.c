@@ -2,59 +2,60 @@
 
 #include <stdio.h>
 
+// clang-format off
 int table_white_pawn[64] = {
-  000, 000, 000, 000, 000, 000, 000, 000,
-  000, 000, 000, 000, 000, 000, 000, 000,
-  000, 000, 000, 15, 15, 000, 000, 000,
-  000, 000, 15, 30, 30, 15, 000, 000,
+  00, 00, 00, 00, 00, 00, 00, 00,
+  00, 00, 00, 00, 00, 00, 00, 00,
+  00, 00, 00, 15, 15, 00, 00, 00,
+  00, 00, 15, 30, 30, 15, 00, 00,
   10, 15, 20, 25, 25, 20, 15, 10,
-  20, 20, 20, 000, 000, 20, 20, 20,
-  000, 000, 000, 000, 000, 000, 000, 000,
-  000, 000, 000, 000, 000, 000, 000, 000,
+  10, 15, 20, 25, 25, 20, 15, 10, // @@FIXME this row should be something else
+  20, 20, 20, 00, 00, 20, 20, 20,
+  00, 00, 00, 00, 00, 00, 00, 00,
 };
 
 int table_white_knight[64] = {
   -90, -90, -90, -90, -90, -90, -90, -90,
-  -90, 000, 000, 000, 000, 000, 000, -90,
-  -50, 60, 90, 75, 75, 90, 60, -50,
-  -70, 000, 60, 30, 30, 60, 000, -70,
-  -70, 000, 60, 30, 30, 60, 000, -70,
-  -70, 000, 60, 60, 60, 60, 000, -70,
+  -90,  00,  00,  00,  00,  00,  00, -90,
+  -50,  60,  90,  75,  75,  90,  60, -50,
+  -70,  00,  60,  30,  30,  60,  00, -70,
+  -70,  00,  60,  30,  30,  60,  00, -70,
+  -70,  00,  60,  60,  60,  60,  00, -70,
   -70, -30, -30, -30, -30, -30, -30, -70,
   -90, -70, -70, -70, -70, -70, -70, -90,
 };
 
 int table_white_bishop[64] = {
-  -90, -90, -90, -90, 000, -90, -90, -90,
+  -90, -90, -90, -90,  00, -90, -90, -90,
   -90, -60, -60, -60, -60, -60, -60, -90,
-  -60, -60, 000, 000, 000, 000, -60, -60,
-  000, 000, 40, 40, 40, 40, 000, 000,
-  000, 40, 40, 40, 40, 40, 40, 000,
-  000, 40, 40, 40, 40, 40, 40, 000,
-  -30, 000, 000, 000, 000, 000, 000, -30,
+  -60, -60,  00,  00,  00,  00, -60, -60,
+   00,  00,  40,  40,  40,  40,  00,  00,
+   00,  40,  40,  40,  40,  40,  40,  00,
+   00,  40,  40,  40,  40,  40,  40,  00,
+  -30,  00,  00,  00,  00,  00,  00, -30,
   -30, -30, -30, -30, -30, -30, -30, -30,
 };
 
 int table_white_castle[64] = {
-  000, 000, 000, 000, 000, 000, 000, 000,
-  000, 000, 000, 000, 000, 000, 000, 000,
-  000, 000, 000, 000, 000, 000, 000, 000,
-  000, 000, 000, 000, 000, 000, 000, 000,
-  000, 000, 000, 000, 000, 000, 000, 000,
-  000, 000, 000, 000, 000, 000, 000, 000,
-  000, 000, 000, 000, 000, 000, 000, 000,
-  000, 000, 000, 000, 000, 000, 000, 000,
+  00, 00, 00, 00, 00, 00, 00, 00,
+  00, 00, 00, 00, 00, 00, 00, 00,
+  00, 00, 00, 00, 00, 00, 00, 00,
+  00, 00, 00, 00, 00, 00, 00, 00,
+  00, 00, 00, 00, 00, 00, 00, 00,
+  00, 00, 00, 00, 00, 00, 00, 00,
+  00, 00, 00, 00, 00, 00, 00, 00,
+  00, 00, 00, 00, 00, 00, 00, 00,
 };
 
 int table_white_queen[64] = {
-  000, 000, 000, 000, 000, 000, 000, 000,
-  000, 000, 000, 000, 000, 000, 000, 000,
-  000, 000, 000, 000, 000, 000, 000, 000,
-  000, 000, 000, 000, 000, 000, 000, 000,
-  000, 000, 000, 000, 000, 000, 000, 000,
-  000, 000, 000, 000, 000, 000, 000, 000,
-  000, 000, 000, 000, 000, 000, 000, 000,
-  000, 000, 000, 000, 000, 000, 000, 000,
+  00, 00, 00, 00, 00, 00, 00, 00,
+  00, 00, 00, 00, 00, 00, 00, 00,
+  00, 00, 00, 00, 00, 00, 00, 00,
+  00, 00, 00, 00, 00, 00, 00, 00,
+  00, 00, 00, 00, 00, 00, 00, 00,
+  00, 00, 00, 00, 00, 00, 00, 00,
+  00, 00, 00, 00, 00, 00, 00, 00,
+  00, 00, 00, 00, 00, 00, 00, 00,
 };
 
 int table_white_king[64] = {
@@ -63,11 +64,11 @@ int table_white_king[64] = {
   -90, -90, -90, -90, -90, -90, -90, -90,
   -90, -90, -90, -90, -90, -90, -90, -90,
   -40, -40, -90, -90, -90, -90, -40, -40,
-  000, 000, -40, -40, -40, -40, 000, 000,
-  50, 50, 000, -40, -40, 000, 50, 50,
-  100, 100, 50, -40, -40, 50, 100, 100,
+   00,  00, -40, -40, -40, -40,  00,  00,
+   50,  50,  00, -40, -40,  00,  50,  50,
+  100, 100,  50, -40, -40,  50, 100, 100,
 };
-
+// clang-format on
 
 int table_black_pawn[64];
 int table_black_knight[64];
@@ -98,33 +99,45 @@ int get_positional_value(Board board)
 
     switch ((int)board.state[i])
     {
-      case ChessPiecePawn:
-        value += table_black_pawn[i]; break;
-      case ChessPieceKnight:
-        value += table_black_knight[i]; break;
-      case ChessPieceBishop:
-        value += table_black_bishop[i]; break;
-      case ChessPieceCastle:
-        value += table_black_castle[i]; break;
-      case ChessPieceQueen:
-        value += table_black_queen[i]; break;
-      case ChessPieceKing:
-        value += table_black_king[i]; break;
+    case ChessPiecePawn:
+      value += table_black_pawn[i];
+      break;
+    case ChessPieceKnight:
+      value += table_black_knight[i];
+      break;
+    case ChessPieceBishop:
+      value += table_black_bishop[i];
+      break;
+    case ChessPieceCastle:
+      value += table_black_castle[i];
+      break;
+    case ChessPieceQueen:
+      value += table_black_queen[i];
+      break;
+    case ChessPieceKing:
+      value += table_black_king[i];
+      break;
 
-      case ChessPiecePawn | ChessPieceIsWhite:
-        value += table_white_pawn[i]; break;
-      case ChessPieceKnight | ChessPieceIsWhite:
-        value += table_white_knight[i]; break;
-      case ChessPieceBishop | ChessPieceIsWhite:
-        value += table_white_bishop[i]; break;
-      case ChessPieceCastle | ChessPieceIsWhite:
-        value += table_white_castle[i]; break;
-      case ChessPieceQueen | ChessPieceIsWhite:
-        value += table_white_queen[i]; break;
-      case ChessPieceKing | ChessPieceIsWhite:
-        value += table_white_king[i]; break;
-      default:
-        break;
+    case ChessPiecePawn | ChessPieceIsWhite:
+      value += table_white_pawn[i];
+      break;
+    case ChessPieceKnight | ChessPieceIsWhite:
+      value += table_white_knight[i];
+      break;
+    case ChessPieceBishop | ChessPieceIsWhite:
+      value += table_white_bishop[i];
+      break;
+    case ChessPieceCastle | ChessPieceIsWhite:
+      value += table_white_castle[i];
+      break;
+    case ChessPieceQueen | ChessPieceIsWhite:
+      value += table_white_queen[i];
+      break;
+    case ChessPieceKing | ChessPieceIsWhite:
+      value += table_white_king[i];
+      break;
+    default:
+      break;
     }
   }
   return value;
@@ -134,7 +147,7 @@ int get_piece_value(Board board)
 {
   int value = 0;
   // @@Implement dictionary and use dictionary instead of switch
-   for (int i = 0; i < 64; i++)
+  for (int i = 0; i < 64; i++)
   {
     ChessPiece piece = board.state[i];
     int sign;
@@ -144,19 +157,23 @@ int get_piece_value(Board board)
       sign = -1;
 
     piece &= ~ChessPieceIsWhite;
-    switch(piece)
+    switch (piece)
     {
-      case ChessPiecePawn:
-        value += sign * 100; break;
-      case ChessPieceKnight:
-      case ChessPieceBishop:
-        value += sign * 350; break;
-      case ChessPieceCastle:
-        value += sign * 525; break;
-      case ChessPieceQueen:
-        value += sign * 1000; break;
-      default:
-        break;
+    case ChessPiecePawn:
+      value += sign * 100;
+      break;
+    case ChessPieceKnight:
+    case ChessPieceBishop:
+      value += sign * 350;
+      break;
+    case ChessPieceCastle:
+      value += sign * 525;
+      break;
+    case ChessPieceQueen:
+      value += sign * 1000;
+      break;
+    default:
+      break;
     }
   }
   return value;
@@ -171,5 +188,3 @@ int evaluate_board(Board board)
 
   return value;
 }
-
-
