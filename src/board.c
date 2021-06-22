@@ -45,7 +45,7 @@ Move *board_calculate_line(Board board, int depth, bool maximising_player)
   Move* line = calloc(depth, sizeof(Move));
   for (int i = 0; i < depth; i++)
   {
-    minimax(board, depth - i, -INT_MAX, INT_MAX, maximising_player, true, &best_move);
+    minimax(board, depth - i, -INT_MAX, INT_MAX, maximising_player, &best_move);
     board_update(&board, &best_move);
     line[i] = best_move;
     maximising_player = !maximising_player;

@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 int minimax(Board board, size_t depth, s64 alpha, s64 beta,
-            bool maximising_player, bool is_initial_call, Move* out_move)
+            bool maximising_player, Move* out_move)
 {
   int rv = 0;
   if (depth == 0)
@@ -22,22 +22,22 @@ int minimax(Board board, size_t depth, s64 alpha, s64 beta,
   for (size_t i = 0; i < nmoves; i++)
   {
     board_update(&new_board, &(moves[i]));
-    int eval = minimax(new_board, depth - 1, alpha, beta, !maximising_player,
-                       false, NULL);
+    int eval =
+        minimax(new_board, depth - 1, alpha, beta, !maximising_player, NULL);
     new_board = board; // Restore board state after trying a move
     int last_best_eval = best_eval;
     best_eval = maximising_player ? max(best_eval, eval) : min(best_eval, eval);
     if (maximising_player)
     {
       alpha = max(alpha, eval);
-      if (best_eval > last_best_eval && is_initial_call)
+      if (best_eval > last_best_eval)
         if (out_move)
           *out_move = moves[i];
     }
     else
     {
       beta = min(beta, eval);
-      if (best_eval < last_best_eval && is_initial_call)
+      if (best_eval < last_best_eval)
         if (out_move)
           *out_move = moves[i];
     }

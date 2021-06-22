@@ -2,12 +2,12 @@
 #define _USE_MATH_DEFINES
 
 #include "defs.h"
+#include "evaluate.h"
 #include "matrix.h"
 #include "message.h"
 #include "move.h"
-#include "util.h"
-#include "evaluate.h"
 #include "search.h"
+#include "util.h"
 
 #include <assert.h>
 #include <ipc/socket.h>
@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
 
   Move best_move;
   printf("minimax: %d\n",
-         minimax(board, depth, -INT_MAX, INT_MAX, true, true, &best_move));
+         minimax(board, depth, -INT_MAX, INT_MAX, true, &best_move));
   printf("Best move: %s\n", move_tostring(best_move));
 
   Move* line = board_calculate_line(board, depth, isWhitesTurn);
@@ -82,7 +82,7 @@ int main(int argc, char* argv[])
       isWhitesTurn = !isWhitesTurn;
 
       Move server_move;
-      minimax(board, depth, -INT_MAX, INT_MAX, isWhitesTurn, true, &server_move);
+      minimax(board, depth, -INT_MAX, INT_MAX, isWhitesTurn, &server_move);
 
       printf("Server move: %s\n", move_tostring(server_move));
       while (socket_write_bytes(&sock, &server_move, sizeof(move)) ==
