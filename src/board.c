@@ -1,5 +1,6 @@
 #include "board.h"
 #include "util.h"
+#include "search.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,6 +37,20 @@ void board_update(Board* board, Move* move)
 {
   board->state[move->to] = board->state[move->from];
   board->state[move->from] = ChessPieceNone;
+}
+
+Move *board_calculate_line(Board board, int depth, bool maximising_player)
+{
+  Move best_move;
+  Move* line = calloc(depth, sizeof(Move));
+  for (int i = 0; i < depth; i++)
+  {
+    minimax(board, depth - i, -INT_MAX, INT_MAX, maximising_player, true, &best_move);
+    board_update(&board, &best_move);
+    line[i] = best_move;
+    maximising_player = !maximising_player;
+  }
+  return line;
 }
 
 // Verifies if the target square is either empty or contains a piece of the

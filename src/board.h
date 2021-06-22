@@ -13,3 +13,4 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves);
 void board_get_moves_all(Board board, Move** moves, size_t* nmoves, int flags);
 
 char* board_tostring(Board board);
+Move* board_calculate_line(Board board, int depth, bool maximising_player);
