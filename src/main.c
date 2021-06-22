@@ -6,6 +6,7 @@
 #include "message.h"
 #include "move.h"
 #include "util.h"
+#include "evaluate.h"
 
 #include <assert.h>
 #include <ipc/socket.h>
@@ -29,15 +30,7 @@ int minimax(Board board, size_t depth, s64 alpha, s64 beta,
   int rv = 0;
   if (depth == 0)
   {
-    // How many pieces does each player have?
-    for (int i = 0; i < 64; i++)
-    {
-      if (board.state[i] && (board.state[i] & ChessPieceIsWhite))
-        rv++;
-      if (board.state[i] && !(board.state[i] & ChessPieceIsWhite))
-        rv--;
-    }
-    return rv;
+    return evaluate_board(board);
   }
 
   int best_eval = maximising_player ? -INT_MAX : INT_MAX;
@@ -85,15 +78,18 @@ int main(int argc, char* argv[])
   Board board;
   board_new(&board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
   printf("%s\n", board_tostring(board));
+  table_black_init();
   bool isWhitesTurn = true;
+  int depth = 7;
 
   Move* moves;
   size_t nmoves;
 
   Move best_move;
   printf("minimax: %d\n",
-         minimax(board, 7, -INT_MAX, INT_MAX, true, true, &best_move));
+         minimax(board, depth, -INT_MAX, INT_MAX, true, true, &best_move));
   printf("Best move: %s\n", move_tostring(best_move));
+
   socket_init(&sock, get_dotnet_pipe_name(sockname), SocketServer);
   for (;;)
   {
@@ -118,7 +114,7 @@ int main(int argc, char* argv[])
       isWhitesTurn = !isWhitesTurn;
 
       Move server_move;
-      minimax(board, 7, -INT_MAX, INT_MAX, isWhitesTurn, true, &server_move);
+      minimax(board, depth, -INT_MAX, INT_MAX, isWhitesTurn, true, &server_move);
 
       printf("Server move: %s\n", move_tostring(server_move));
       while (socket_write_bytes(&sock, &server_move, sizeof(move)) ==
