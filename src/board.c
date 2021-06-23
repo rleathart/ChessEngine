@@ -141,14 +141,16 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves)
 
   if (board[pos] & (ChessPieceBishop | ChessPieceQueen | ChessPieceKing))
   {
-    int slide_offset[] = {9, 7, -9, -7};
+    int slide_offset[] = {17, 15, -17, -15};
     for (int i = 0; i < 4; i++)
     {
-      int tpos = pos + slide_offset[i];
-      while (!(tpos & 0x88) && CanMoveTo(tpos))
+      int tpos_88 = topos88(pos) + slide_offset[i];
+      while (!(tpos_88 & 0x88) && CanMoveTo(topos64(tpos_88)))
       {
-        AddMove(move_new(pos, tpos));
-        tpos += slide_offset[i];
+        AddMove(move_new(pos, topos64(tpos_88)));
+        if (board[topos64(tpos_88)])
+          break;
+        tpos_88 += slide_offset[i];
         if (board[pos] & ChessPieceKing)
           break;
       }
@@ -157,15 +159,16 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves)
 
   if (board[pos] & (ChessPieceCastle | ChessPieceQueen | ChessPieceKing))
   {
-    int slide_offset[] = {-8, 8, -1, 1};
+    int slide_offset[] = {-16, 16, -1, 1};
     for (int i = 0; i < 4; i++)
     {
-      // Target position
-      int tpos = pos + slide_offset[i];
-      while (!(tpos & 0x88) && CanMoveTo(tpos))
+      int tpos_88 = topos88(pos) + slide_offset[i];
+      while (!(tpos_88 & 0x88) && CanMoveTo(topos64(tpos_88)))
       {
-        AddMove(move_new(pos, tpos));
-        tpos += slide_offset[i];
+        AddMove(move_new(pos, topos64(tpos_88)));
+        if (board[topos64(tpos_88)])
+          break;
+        tpos_88 += slide_offset[i];
         if (board[pos] & ChessPieceKing)
           break;
       }
