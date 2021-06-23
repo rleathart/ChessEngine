@@ -7,18 +7,18 @@
 int minimax(Board board, size_t depth, s64 alpha, s64 beta,
             bool maximising_player, Move* out_move)
 {
-  int rv = 0;
-  if (depth == 0)
-  {
-    return evaluate_board(board);
-  }
-
   int best_eval = maximising_player ? -INT_MAX : INT_MAX;
   Board new_board = board;
   Move* moves;
   size_t nmoves = 0;
   board_get_moves_all(board, &moves, &nmoves,
                       maximising_player ? GetMovesWhite : GetMovesBlack);
+  if (nmoves == 0)
+    return best_eval;
+
+  if (depth == 0)
+    return evaluate_board(board);
+
   for (size_t i = 0; i < nmoves; i++)
   {
     board_update(&new_board, &(moves[i]));
