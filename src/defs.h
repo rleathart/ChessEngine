@@ -1,6 +1,11 @@
 #pragma once
 
+#include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
+
+extern FILE* logger_fd;
+extern char* logger_filepath;
 
 typedef uint8_t u8;
 typedef uint16_t u16;

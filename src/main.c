@@ -29,6 +29,12 @@ char* sockname = "ChessIPC";
 
 int main(int argc, char* argv[])
 {
+
+  char* logger_filepath = "chess.log";
+  FILE* logger_fd = fopen(logger_filepath, "a");
+  fprintf(logger_fd, "\n********************\n");
+  fclose(logger_fd);
+
   srand(10);
   ipcError err = 0;
   Move move = {};
@@ -47,16 +53,6 @@ int main(int argc, char* argv[])
   printf("minimax: %d\n",
          minimax(board, depth, -INT_MAX, INT_MAX, true, &best_move));
   printf("Best move: %s\n", move_tostring(best_move));
-
-  Move* line = board_calculate_line(board, depth, isWhitesTurn);
-  printf("\nLine:");
-  Board test_board = board;
-  printf("\n\n%s", board_tostring(test_board));
-  for (int i = 0; i < depth; i++)
-  {
-    board_update(&test_board, &line[i]);
-    printf("\n\n%s", board_tostring(test_board));
-  }
 
   socket_init(&sock, get_dotnet_pipe_name(sockname), SocketServer);
   for (;;)
@@ -88,6 +84,19 @@ int main(int argc, char* argv[])
       while (socket_write_bytes(&sock, &server_move, sizeof(move)) ==
              ipcErrorSocketHasMoreData)
         sleep_ms(10);
+
+      logger_fd = fopen(logger_filepath, "a");
+      Move* line = board_calculate_line(board, depth, isWhitesTurn);
+      fprintf(logger_fd, "Line:\n");
+      Board test_board = board;
+      fprintf(logger_fd, "%s\n\n", board_tostring(test_board));
+      for (int i = 0; i < depth; i++)
+      {
+        board_update(&test_board, &line[i]);
+        fprintf(logger_fd, "%s\n\n", board_tostring(test_board));
+      }
+      fclose(logger_fd);
+
       isWhitesTurn = !isWhitesTurn;
 
       // Test code for Message passing between client/server
@@ -100,6 +109,8 @@ int main(int argc, char* argv[])
       printf("%s\n", board_tostring(board));
     }
   }
+
+  fclose(logger_fd);
 
   return 0;
 }
