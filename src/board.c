@@ -120,7 +120,7 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves)
     int double_move_rank = isWhite ? 6 : 1;
     if (torank64(pos) == double_move_rank &&
         board[pos + dirsgn * 16] == ChessPieceNone)
-      (*moves)[idx++] = move_new(pos, pos - 16);
+      (*moves)[idx++] = move_new(pos, pos + dirsgn * 16);
 
     int tpos_88 = pos_88 + dirsgn * 16;
 
@@ -132,7 +132,7 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves)
     for (int i = 0; i < 2; i++)
     {
       int tpos_88 = pos_88 + dirsgn * diagonals[i];
-      int tpos = topos64(tpos);
+      int tpos = topos64(tpos_88);
       if (tpos_88 & 0x88)
         continue;
 
