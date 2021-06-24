@@ -14,6 +14,23 @@ void board_new(Board* board, char* fen)
     board->state[i] = pieces[i];
 }
 
+// Initialises a board from the string representation of a board.
+//
+// board_str is like that which board_tostring returns except without the
+// newlines.
+void board_new_from_string(Board* board, char* board_str)
+{
+  memset(board, 0, sizeof(*board));
+
+  int idx = 0;
+  for (char c = *board_str; *board_str; c = *(++board_str))
+  {
+    if (c == ' ')
+      continue;
+    board->state[idx++] = piece_from_char(c);
+  }
+}
+
 char* board_tostring(Board board)
 {
   char* str = calloc(1, 4096);
