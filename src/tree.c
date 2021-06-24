@@ -1,5 +1,5 @@
-#include "tree.h"
-#include "move.h"
+#include <chess/tree.h>
+#include <chess/move.h>
 
 #include <stdlib.h>
 
