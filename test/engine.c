@@ -20,10 +20,5 @@ int main(int argc, char** argv)
   num_failed = srunner_ntests_failed(sr);
   srunner_free(sr);
 
-#ifdef _WIN32
-#else
-  unlink(sockname);
-#endif
-
   return num_failed == 0 ? 0 : 1;
 }
