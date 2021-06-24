@@ -1,4 +1,4 @@
-#include "evaluate.h"
+#include <chess/evaluate.h>
 
 #include <stdio.h>
 

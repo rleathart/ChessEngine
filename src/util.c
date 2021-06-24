@@ -1,5 +1,5 @@
-#include "util.h"
-#include "piece.h"
+#include <chess/util.h>
+#include <chess/piece.h>
 
 #ifdef _WIN32
 #include <windows.h>

@@ -1,14 +1,14 @@
 #define _CRT_SECURE_NO_DEPRECATE
 #define _USE_MATH_DEFINES
 
-#include "defs.h"
-#include "evaluate.h"
-#include "matrix.h"
-#include "message.h"
-#include "move.h"
-#include "search.h"
-#include "util.h"
-#include "tree.h"
+#include <chess/defs.h>
+#include <chess/evaluate.h>
+#include <chess/matrix.h>
+#include <chess/message.h>
+#include <chess/move.h>
+#include <chess/search.h>
+#include <chess/util.h>
+#include <chess/tree.h>
 
 #include <assert.h>
 #include <ipc/socket.h>

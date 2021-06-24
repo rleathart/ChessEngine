@@ -15,12 +15,16 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
   add_compile_definitions(_DEBUG=1 DEBUG=1)
 endif()
 
-project(main C)
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS YES CACHE BOOL "Export all symbols")
 
+project(chess C)
+
+include(CTest)
 find_package(ipc REQUIRED)
 
+include_directories(include)
+
 set(SRC
-  src/main.c
   src/matrix.c
   src/util.c
   src/piece.c
@@ -32,5 +36,33 @@ set(SRC
   src/tree.c
   )
 
-add_executable(${PROJECT_NAME} ${SRC})
+add_library(${PROJECT_NAME} ${SRC})
 target_link_libraries(${PROJECT_NAME} ipc)
+
+target_include_directories(${PROJECT_NAME} PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+    PRIVATE src)
+install(
+  TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}Config
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+  )
+install(DIRECTORY include/ DESTINATION include)
+install(EXPORT ${PROJECT_NAME}Config DESTINATION lib/cmake/${PROJECT_NAME})
+export(TARGETS ${PROJECT_NAME} FILE ${PROJECT_NAME}Config.cmake)
+
+add_executable(main src/main.c)
+target_link_libraries(main ${PROJECT_NAME} ipc)
+
+if (CHESS_BUILD_TESTS)
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules(CHECK REQUIRED check)
+  include_directories(include ${CHECK_INCLUDE_DIRS})
+  link_directories(${CHECK_LIBRARY_DIRS})
+
+  add_executable(test_engine test/engine.c)
+  target_link_libraries(test_engine ${CHECK_LIBRARIES} ${PROJECT_NAME} ipc)
+  add_test(NAME enging COMMAND test_socket)
+endif()

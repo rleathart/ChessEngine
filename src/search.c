@@ -1,7 +1,7 @@
-#include "search.h"
-#include "board.h"
-#include "evaluate.h"
-#include "tree.h"
+#include <chess/search.h>
+#include <chess/board.h>
+#include <chess/evaluate.h>
+#include <chess/tree.h>
 
 #include <stdlib.h>
 

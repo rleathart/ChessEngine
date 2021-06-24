@@ -1,6 +1,6 @@
-#include "board.h"
-#include "util.h"
-#include "search.h"
+#include <chess/board.h>
+#include <chess/util.h>
+#include <chess/search.h>
 
 #include <stdio.h>
 #include <stdlib.h>

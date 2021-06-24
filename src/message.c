@@ -1,5 +1,5 @@
-#include "message.h"
-#include "util.h"
+#include <chess/message.h>
+#include <chess/util.h>
 
 enum
 {

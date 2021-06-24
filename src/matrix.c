@@ -1,4 +1,4 @@
-#include "matrix.h"
+#include <chess/matrix.h>
 #include <math.h>
 #include <assert.h>
 #include <stdio.h>

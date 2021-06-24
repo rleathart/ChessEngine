@@ -1,6 +1,6 @@
-#include "move.h"
-#include "util.h"
-#include "piece.h"
+#include <chess/move.h>
+#include <chess/util.h>
+#include <chess/piece.h>
 
 #include <stdbool.h>
 #include <stdio.h>

@@ -1,4 +1,4 @@
-#include "piece.h"
+#include <chess/piece.h>
 
 #include <ctype.h>
 
