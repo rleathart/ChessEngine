@@ -8,6 +8,7 @@
 #include "move.h"
 #include "search.h"
 #include "util.h"
+#include "tree.h"
 
 #include <assert.h>
 #include <ipc/socket.h>
@@ -44,15 +45,22 @@ int main(int argc, char* argv[])
   printf("%s\n", board_tostring(board));
   table_black_init();
   bool isWhitesTurn = true;
-  int depth = 6;
+  int depth = 5;
 
   Move* moves;
   size_t nmoves;
 
+  Node* root = node_new(NULL, move_new(-1, -1), isWhitesTurn);
+  Tree* tree = tree_new(root, board);
+
   Move best_move;
   printf("minimax: %d\n",
-         minimax(board, depth, -INT_MAX, INT_MAX, true, &best_move));
-  printf("Best move: %s\n", move_tostring(best_move));
+         minimax(board, depth, -INT_MAX, INT_MAX, true, &best_move, root));
+  printf("Best move: %s\n\n", move_tostring(best_move));
+
+  tree_print_best_line(*tree);
+
+  int nodes_freed = tree_free(tree);
 
   socket_init(&sock, get_dotnet_pipe_name(sockname), SocketServer);
   for (;;)
@@ -78,7 +86,7 @@ int main(int argc, char* argv[])
       isWhitesTurn = !isWhitesTurn;
 
       Move server_move;
-      minimax(board, depth, -INT_MAX, INT_MAX, isWhitesTurn, &server_move);
+      minimax(board, depth, -INT_MAX, INT_MAX, isWhitesTurn, &server_move, NULL);
 
       printf("Server move: %s\n", move_tostring(server_move));
       while (socket_write_bytes(&sock, &server_move, sizeof(move)) ==

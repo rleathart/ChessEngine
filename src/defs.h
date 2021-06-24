@@ -52,3 +52,22 @@ enum
   GetMovesWhite = 1 << 0,
   GetMovesBlack = 1 << 1,
 };
+typedef struct Node Node;
+struct Node
+{
+  Node* parent;
+  Node** children;
+  size_t nchilds;
+  int best_child; // Holds index to best child
+
+  Move move;
+  int value; // The value of the best line that can be taken from this board state
+  bool isWhite; // Is it white's turn after this move
+};
+
+typedef struct Tree Tree;
+struct Tree
+{
+  Node* root;
+  Board board;
+};
