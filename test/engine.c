@@ -19,7 +19,7 @@ START_TEST(test_pawn_moves)
 
   // Pawn should be able to move 1 or 2 squares forward and capture enemy pawn.
   // It should not wrap around the board to capture the pawn on the other side
-  board_get_moves(board, topos64(0x10), &moves, &nmoves);
+  board_get_moves(board, topos64(0x10), &moves, &nmoves, 0);
 
   int expected_nmoves = 3;
   ck_assert_int_eq(nmoves, expected_nmoves);
@@ -65,7 +65,7 @@ START_TEST(test_knight_moves)
                                 "0 0 0 0 0 0 0 0"
                                 "0 0 0 0 0 0 0 0");
 
-  board_get_moves(board, topos64(0x10), &moves, &nmoves);
+  board_get_moves(board, topos64(0x10), &moves, &nmoves, 0);
 
   int expected_nmoves = 3;
   ck_assert_int_eq(nmoves, expected_nmoves);
@@ -108,7 +108,7 @@ START_TEST(test_castle_moves)
                                 "0 0 0 0 0 0 0 0"
                                 "0 P 0 0 0 0 0 0");
 
-  board_get_moves(board, topos64(0x11), &moves, &nmoves);
+  board_get_moves(board, topos64(0x11), &moves, &nmoves, 0);
 
   int expected_nmoves = 9;
   ck_assert_int_eq(nmoves, expected_nmoves);
@@ -162,7 +162,7 @@ START_TEST(test_bishop_moves)
                                 "0 0 0 0 0 0 0 0"
                                 "0 0 0 0 0 0 0 0");
 
-  board_get_moves(board, topos64(0x11), &moves, &nmoves);
+  board_get_moves(board, topos64(0x11), &moves, &nmoves, 0);
 
   int expected_nmoves = 5;
   ck_assert_int_eq(nmoves, expected_nmoves);
@@ -206,7 +206,7 @@ START_TEST(test_queen_moves)
                                 "0 0 0 0 0 0 0 0"
                                 "0 P 0 0 0 0 0 0");
 
-  board_get_moves(board, topos64(0x11), &moves, &nmoves);
+  board_get_moves(board, topos64(0x11), &moves, &nmoves, 0);
 
   int expected_nmoves = 11;
   ck_assert_int_eq(nmoves, expected_nmoves);
@@ -263,7 +263,7 @@ START_TEST(test_king_moves)
                                 "0 0 0 0 0 0 0 0"
                                 "0 P 0 0 0 0 0 0");
 
-  board_get_moves(board, topos64(0x02), &moves, &nmoves);
+  board_get_moves(board, topos64(0x02), &moves, &nmoves, 0);
 
   int expected_nmoves = 5;
   ck_assert_int_eq(nmoves, expected_nmoves);
@@ -294,6 +294,32 @@ START_TEST(test_king_moves)
 }
 END_TEST
 
+// Pinned pieces should still be able to check the enemy king
+START_TEST(test_pinned_check)
+{
+  Board board;
+  Move* moves;
+  size_t nmoves = 0;
+
+  board_new_from_string(&board, "k 0 0 0 0 0 0 0"
+                                "0 r 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 B 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 K 0 0 0 0 0 0");
+
+  board_get_moves(board, topos64(0x44), &moves, &nmoves, ConsiderChecks);
+
+  int expected_nmoves = 1;
+  ck_assert_int_eq(nmoves, expected_nmoves);
+  expected_nmoves = 4;
+  board_get_moves(board, topos64(0x71), &moves, &nmoves, ConsiderChecks);
+  ck_assert_int_eq(nmoves, expected_nmoves);
+}
+END_TEST
+
 int main(int argc, char** argv)
 {
   Suite* s1 = suite_create("Engine");
@@ -307,6 +333,7 @@ int main(int argc, char** argv)
   tcase_add_test(tc1_1, test_castle_moves);
   tcase_add_test(tc1_1, test_queen_moves);
   tcase_add_test(tc1_1, test_king_moves);
+  tcase_add_test(tc1_1, test_pinned_check);
   suite_add_tcase(s1, tc1_1);
 
   srunner_run_all(sr, CK_ENV);

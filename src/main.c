@@ -88,22 +88,28 @@ int main(int argc, char* argv[])
       Move server_move;
       minimax(board, depth, -INT_MAX, INT_MAX, isWhitesTurn, &server_move, NULL);
 
+      if (server_move.from < 0)
+      {
+        printf("GAME OVER\n");
+        return 0;
+      }
+
       printf("Server move: %s\n", move_tostring(server_move));
       while (socket_write_bytes(&sock, &server_move, sizeof(move)) ==
              ipcErrorSocketHasMoreData)
         sleep_ms(10);
 
-      logger_fd = fopen(logger_filepath, "a");
-      Move* line = board_calculate_line(board, depth, isWhitesTurn);
-      fprintf(logger_fd, "Line:\n");
-      Board test_board = board;
-      fprintf(logger_fd, "%s\n\n", board_tostring(test_board));
-      for (int i = 0; i < depth; i++)
-      {
-        board_update(&test_board, &line[i]);
-        fprintf(logger_fd, "%s\n\n", board_tostring(test_board));
-      }
-      fclose(logger_fd);
+      /* logger_fd = fopen(logger_filepath, "a"); */
+      /* Move* line = board_calculate_line(board, depth, isWhitesTurn); */
+      /* fprintf(logger_fd, "Line:\n"); */
+      /* Board test_board = board; */
+      /* fprintf(logger_fd, "%s\n\n", board_tostring(test_board)); */
+      /* for (int i = 0; i < depth; i++) */
+      /* { */
+      /*   board_update(&test_board, &line[i]); */
+      /*   fprintf(logger_fd, "%s\n\n", board_tostring(test_board)); */
+      /* } */
+      /* fclose(logger_fd); */
 
       isWhitesTurn = !isWhitesTurn;
 

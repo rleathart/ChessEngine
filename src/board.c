@@ -81,7 +81,51 @@ bool board_can_capture_or_move(Board board, int origin_pos, int target_pos)
          (board.state[target_pos] & ChessPieceIsWhite);
 }
 
-void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves)
+static int find_king(Board board, bool isWhite)
+{
+  for (int i = 0; i < 64; i++)
+  {
+    if ((board.state[i] & ChessPieceKing) == 0)
+      continue;
+    if (isWhite && (board.state[i] & ChessPieceIsWhite) != 0)
+      return i;
+    if (!isWhite && (board.state[i] & ChessPieceIsWhite) == 0)
+      return i;
+  }
+  return -1;
+}
+
+/// @return position of piece that is checking the king or -1 if the king is not
+///         in check
+static int position_of_checker(Board board, bool isWhite)
+{
+  int king_pos = find_king(board, isWhite);
+  for (int i = 0; i < 64; i++)
+  {
+    if (board.state[i] == ChessPieceNone)
+      continue;
+    // pieces cannot check their own king
+    if (isWhite && (board.state[i] & ChessPieceIsWhite))
+      continue;
+    if (!isWhite && !(board.state[i] & ChessPieceIsWhite))
+      continue;
+
+    Move* moves;
+    size_t nmoves = 0;
+    board_get_moves(board, i, &moves, &nmoves, 0);
+    for (int j = 0; j < nmoves; j++)
+      if (moves[j].to == king_pos)
+      {
+        free(moves);
+        return i;
+      }
+    free(moves);
+  }
+  return -1;
+}
+
+void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves,
+                     int flags)
 {
   size_t idx = 0;
   *moves = malloc(64 * sizeof(Move)); // Can be at most 64 moves
@@ -177,6 +221,28 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves)
 
   // @@Implement Castling
 
+  // If making any of these moves would put our king in check then we cant make
+  // them
+  if (flags & ConsiderChecks)
+  {
+    Board board_after = _board;
+    for (int i = 0; i < idx; i++)
+    {
+      int test;
+      board_update(&board_after, &((*moves)[i]));
+      if (position_of_checker(board_after, board[pos] & ChessPieceIsWhite) >= 0)
+      {
+        // This move is invalid so shift all elements down one position
+        // (equivalent to removing the item from the array)
+        for (int j = i; j < idx - 1; j++)
+          (*moves)[j] = (*moves)[j + 1];
+        idx--;
+        i--; // Still need to check the rest of the moves
+      }
+      board_after = _board;
+    }
+  }
+
 end:
   *nmoves = idx;
 }
@@ -197,7 +263,7 @@ void board_get_moves_all(Board board, Move** moves, size_t* nmoves, int flags)
 
     Move* piece_moves;
     size_t nmoves = 0;
-    board_get_moves(board, i, &piece_moves, &nmoves);
+    board_get_moves(board, i, &piece_moves, &nmoves, ConsiderChecks);
     for (size_t j = 0; j < nmoves; j++)
     {
       (*moves)[idx++] = piece_moves[j];

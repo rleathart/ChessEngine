@@ -18,6 +18,8 @@ int minimax(Board board, size_t depth, s64 alpha, s64 beta,
   {
     if (out_node)
       out_node->value = best_eval;
+    if (out_move)
+      *out_move = move_new(-1, -1);
     free(moves);
     return best_eval;
   }

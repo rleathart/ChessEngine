@@ -48,7 +48,7 @@ Move move_get_random(Board board, int flags)
 
     Move* moves;
     size_t nmoves = 0;
-    board_get_moves(board, topos88(pos_64), &moves, &nmoves);
+    board_get_moves(board, topos88(pos_64), &moves, &nmoves, 0);
     if (nmoves == 0)
       continue;
     return moves[randrange(0, nmoves - 1)];
