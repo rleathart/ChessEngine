@@ -6,9 +6,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-void board_new(Board* board, char* fen)
+// Does common initialisation for the Board struct
+static void board_init(Board* board)
 {
   memset(board, 0, sizeof(*board));
+  board->en_passant_tile = -1;
+  for (int i = 0; i < 2; i++)
+    board->can_castle_ks[i] = board->can_castle_qs[i] = true;
+}
+
+void board_new(Board* board, char* fen)
+{
+  board_init(board);
+
   ChessPiece* pieces = parse_fen(fen);
   for (int i = 0; i < 64; i++)
     board->state[i] = pieces[i];
@@ -20,9 +30,7 @@ void board_new(Board* board, char* fen)
 // newlines.
 void board_new_from_string(Board* board, char* board_str)
 {
-  memset(board, 0, sizeof(*board));
-
-  board->en_passant_tile = -1;
+  board_init(board);
 
   int idx = 0;
   for (char c = *board_str; *board_str; c = *(++board_str))
