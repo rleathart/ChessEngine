@@ -212,7 +212,8 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves,
     // Pawns can double move at the start
     int double_move_rank = isWhite ? 6 : 1;
     if (torank64(pos) == double_move_rank &&
-        board[pos + dirsgn * 16] == ChessPieceNone)
+        board[pos + dirsgn * 16] == ChessPieceNone &&
+        board[pos + dirsgn * 8] == ChessPieceNone)
       (*moves)[idx++] = move_new(pos, pos + dirsgn * 16);
 
     int tpos_88 = pos_88 + dirsgn * 16;
