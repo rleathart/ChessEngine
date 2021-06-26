@@ -335,6 +335,91 @@ START_TEST(test_king_moves)
 }
 END_TEST
 
+START_TEST(test_castling)
+{
+  Board board;
+  Move* moves;
+  size_t nmoves = 0;
+
+  board_new_from_string(&board, "r 0 0 0 k 0 0 r"
+                                "0 0 0 p p p 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0");
+
+  board_get_moves(board, topos64(0x04), &moves, &nmoves, 0);
+
+  int expected_nmoves = 4;
+  ck_assert_int_eq(nmoves, expected_nmoves);
+
+  bool found_moves[expected_nmoves];
+  for (int i = 0; i < expected_nmoves; i++)
+    found_moves[i] = false;
+
+  int idx = 0;
+  for (int i = 0; i < nmoves; i++)
+  {
+    if (moves[i].from == topos64(0x04) && moves[i].to == topos64(0x03))
+      found_moves[idx++] = true;
+    if (moves[i].from == topos64(0x04) && moves[i].to == topos64(0x05))
+      found_moves[idx++] = true;
+    if (moves[i].from == topos64(0x04) && moves[i].to == topos64(0x06))
+      found_moves[idx++] = true;
+    if (moves[i].from == topos64(0x04) && moves[i].to == topos64(0x02))
+      found_moves[idx++] = true;
+  }
+
+  for (int i = 0; i < expected_nmoves; i++)
+    fail_if(!found_moves[i], "!found_moves[%d]", i);
+
+  Move tmp = move_new(topos64(0x04), topos64(0x02));
+  board_update(&board, &tmp);
+  ck_assert_int_eq(board.state[0], ChessPieceNone);
+  ck_assert_int_eq(board.state[2], ChessPieceKing);
+  ck_assert_int_eq(board.state[3], ChessPieceCastle);
+
+  tmp = move_new(topos64(0x02), topos64(0x03));
+  board_update(&board, &tmp);
+  tmp = move_new(topos64(0x03), topos64(0x04));
+  board_update(&board, &tmp);
+
+  // We shouldnt be able to castle kingside now
+  board_get_moves(board, topos64(0x04), &moves, &nmoves, 0);
+  ck_assert_int_eq(nmoves, 2);
+
+  // We can't castle through check
+  board_new_from_string(&board, "r 0 0 0 k 0 0 r"
+                                "0 0 0 0 p p 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 Q 0 0 0 0");
+
+  board_get_moves(board, topos64(0x04), &moves, &nmoves, ConsiderChecks);
+
+  // Should only be able to castle kingside here
+  expected_nmoves = 2;
+  ck_assert_int_eq(nmoves, expected_nmoves);
+
+  idx = 0;
+  for (int i = 0; i < nmoves; i++)
+  {
+    if (moves[i].from == topos64(0x04) && moves[i].to == topos64(0x05))
+      found_moves[idx++] = true;
+    if (moves[i].from == topos64(0x04) && moves[i].to == topos64(0x06))
+      found_moves[idx++] = true;
+  }
+
+  for (int i = 0; i < expected_nmoves; i++)
+    fail_if(!found_moves[i], "!found_moves[%d]", i);
+}
+END_TEST
+
 // Pinned pieces should still be able to check the enemy king
 START_TEST(test_pinned_check)
 {
@@ -350,6 +435,8 @@ START_TEST(test_pinned_check)
                                 "0 0 0 0 0 0 0 0"
                                 "0 0 0 0 0 0 0 0"
                                 "0 K 0 0 0 0 0 0");
+  for (int i = 0; i < 2; i++)
+    board.can_castle_ks[i] = board.can_castle_qs[i] = false;
 
   board_get_moves(board, topos64(0x44), &moves, &nmoves, ConsiderChecks);
 
@@ -375,6 +462,7 @@ int main(int argc, char** argv)
   tcase_add_test(tc1_1, test_castle_moves);
   tcase_add_test(tc1_1, test_queen_moves);
   tcase_add_test(tc1_1, test_king_moves);
+  tcase_add_test(tc1_1, test_castling);
   tcase_add_test(tc1_1, test_pinned_check);
   suite_add_tcase(s1, tc1_1);
 

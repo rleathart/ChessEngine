@@ -64,8 +64,35 @@ void board_update(Board* board, Move* move)
 {
   board->state[move->to] = board->state[move->from];
   board->state[move->from] = ChessPieceNone;
-
   bool isWhite = board->state[move->to] & ChessPieceIsWhite;
+
+  // Do castling move
+  if (board->state[move->to] & ChessPieceKing)
+  {
+    if (board->can_castle_qs[isWhite] && move->to - move->from == -2)
+    {
+      board->state[move->to + 1] = ChessPieceCastle;
+      board->state[move->to - 2] = ChessPieceNone;
+    }
+    else if (board->can_castle_ks[isWhite] && move->to - move->from == 2)
+    {
+      board->state[move->to - 1] = ChessPieceCastle;
+      board->state[move->to + 1] = ChessPieceNone;
+    }
+  }
+
+  // If we've moved our king we can't castle anymore
+  if (board->state[move->to] & ChessPieceKing)
+    board->can_castle_ks[isWhite] = board->can_castle_qs[isWhite] = false;
+  // If we move our king/queen side castle then we can no longer castle on
+  // that side
+  if (board->state[move->to] & ChessPieceCastle)
+  {
+    if (tofile64(move->from) == 0)
+      board->can_castle_qs[isWhite] = false;
+    if (tofile64(move->from) == 7)
+      board->can_castle_ks[isWhite] = false;
+  }
 
   if (board->en_passant_tile >= 0 && move->to == board->en_passant_tile)
     board->state[move->to + (isWhite ? 8 : -8)] = ChessPieceNone;
@@ -98,7 +125,7 @@ static bool is_self_capture(Board board, int origin_pos, int target_pos)
   if (board.state[target_pos] == ChessPieceNone)
     return false;
   return !((board.state[origin_pos] & ChessPieceIsWhite) ^
-      (board.state[target_pos] & ChessPieceIsWhite));
+           (board.state[target_pos] & ChessPieceIsWhite));
 }
 
 static int find_king(Board board, bool isWhite)
@@ -157,6 +184,7 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves,
     goto end;
 
   ChessPiece* board = _board.state;
+  bool isWhite = board[pos] & ChessPieceIsWhite;
 
   // Want to check:
   //  If we're off the board
@@ -203,8 +231,7 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves,
 
       // Pawns can only move diagonally if they're capturing a piece or taking
       // en_passant_tile
-      bool can_capture =
-          !is_self_capture(_board, pos, tpos) && board[tpos];
+      bool can_capture = !is_self_capture(_board, pos, tpos) && board[tpos];
       can_capture = can_capture || tpos == _board.en_passant_tile;
 
       if (can_capture)
@@ -242,7 +269,45 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves,
     }
   }
 
-  // @@Implement Castling
+  // Castling
+  if (board[pos] & ChessPieceKing)
+  {
+    for (int castling_ks = 0; castling_ks < 2; castling_ks++)
+    {
+      if (!(castling_ks ? _board.can_castle_ks[isWhite]
+                        : _board.can_castle_qs[isWhite]))
+        break;
+
+      // There needs to actually be a castle in the corner square
+      if (!(board[topos64fr(castling_ks ? 7 : 0, isWhite ? 7 : 0)]))
+        break;
+
+      // Can't castle if we're in check
+      if (position_of_checker(_board, isWhite) >= 0)
+        break;
+
+      bool can_castle = true;
+      Board board_cpy = _board;
+      int sign = castling_ks ? 1 : -1;
+      for (int i = 1; i < (castling_ks ? 3 : 4); i++)
+      {
+        int tpos = pos + sign * i;
+        if (board[tpos] != ChessPieceNone)
+          can_castle = false;
+
+        // If moving through this square would put the king in check, we can't
+        // castle
+        Move tmp = move_new(pos, tpos);
+        board_update(&board_cpy, &tmp);
+        if (position_of_checker(board_cpy, isWhite) >= 0)
+          can_castle = false;
+        board_cpy = _board;
+      }
+
+      if (can_castle)
+        (*moves)[idx++] = move_new(pos, pos + sign * 2);
+    }
+  }
 
   // If making any of these moves would put our king in check then we cant make
   // them
