@@ -50,6 +50,47 @@ START_TEST(test_pawn_moves)
 }
 END_TEST
 
+START_TEST(test_en_passant)
+{
+  Board board;
+  Move* moves;
+  size_t nmoves = 0;
+
+  board_new_from_string(&board, "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 p 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 P 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0");
+  Move tmp = move_new(topos64(0x14), topos64(0x34));
+  board_update(&board, &tmp); // Double move black pawn
+  ck_assert_int_eq(board.en_passant_tile, topos64(0x24));
+
+  board_get_moves(board, topos64(0x33), &moves, &nmoves, 0);
+
+  int expected_nmoves = 2;
+  ck_assert_int_eq(nmoves, expected_nmoves);
+
+  bool found_moves[expected_nmoves];
+  for (int i = 0; i < expected_nmoves; i++)
+    found_moves[i] = false;
+
+  int idx = 0;
+  for (int i = 0; i < nmoves; i++)
+  {
+    if (moves[i].from == topos64(0x33) && moves[i].to == topos64(0x23))
+      found_moves[idx++] = true;
+    if (moves[i].from == topos64(0x33) && moves[i].to == topos64(0x24))
+      found_moves[idx++] = true;
+  }
+
+  for (int i = 0; i < expected_nmoves; i++)
+    fail_if(!found_moves[i]);
+}
+END_TEST
+
 START_TEST(test_knight_moves)
 {
   Board board;
@@ -328,6 +369,7 @@ int main(int argc, char** argv)
   int num_failed;
 
   tcase_add_test(tc1_1, test_pawn_moves);
+  tcase_add_test(tc1_1, test_en_passant);
   tcase_add_test(tc1_1, test_knight_moves);
   tcase_add_test(tc1_1, test_bishop_moves);
   tcase_add_test(tc1_1, test_castle_moves);

@@ -22,6 +22,8 @@ void board_new_from_string(Board* board, char* board_str)
 {
   memset(board, 0, sizeof(*board));
 
+  board->en_passant_tile = -1;
+
   int idx = 0;
   for (char c = *board_str; *board_str; c = *(++board_str))
   {
@@ -54,6 +56,17 @@ void board_update(Board* board, Move* move)
 {
   board->state[move->to] = board->state[move->from];
   board->state[move->from] = ChessPieceNone;
+
+  bool isWhite = board->state[move->to] & ChessPieceIsWhite;
+
+  if (board->en_passant_tile >= 0 && move->to == board->en_passant_tile)
+    board->state[move->to + (isWhite ? 8 : -8)] = ChessPieceNone;
+
+  board->en_passant_tile = -1;
+
+  if (board->state[move->to] & ChessPiecePawn)
+    if (abs(move->to - move->from) == 16) // Pawn has double moved
+      board->en_passant_tile = move->to + (isWhite ? 8 : -8);
 }
 
 Move* board_calculate_line(Board board, int depth, bool maximising_player)
@@ -72,13 +85,12 @@ Move* board_calculate_line(Board board, int depth, bool maximising_player)
 }
 
 // Checks that we're not doing a self capture.
-// NOTE: Does not check for off-board wrapping
-bool board_can_capture_or_move(Board board, int origin_pos, int target_pos)
+static bool is_self_capture(Board board, int origin_pos, int target_pos)
 {
   if (board.state[target_pos] == ChessPieceNone)
-    return true;
-  return (board.state[origin_pos] & ChessPieceIsWhite) ^
-         (board.state[target_pos] & ChessPieceIsWhite);
+    return false;
+  return !((board.state[origin_pos] & ChessPieceIsWhite) ^
+      (board.state[target_pos] & ChessPieceIsWhite));
 }
 
 static int find_king(Board board, bool isWhite)
@@ -124,6 +136,7 @@ static int position_of_checker(Board board, bool isWhite)
   return -1;
 }
 
+// @@Document Explain why we take Move**
 void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves,
                      int flags)
 {
@@ -150,7 +163,7 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves,
       int tpos_88 = pos_88 + move_offsets[i];
       if (tpos_88 & 0x88)
         continue;
-      if (board_can_capture_or_move(_board, pos, topos64(tpos_88)))
+      if (!is_self_capture(_board, pos, topos64(tpos_88)))
         (*moves)[idx++] = move_new(pos, topos64(tpos_88));
     }
   }
@@ -180,9 +193,11 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves,
       if (tpos_88 & 0x88)
         continue;
 
-      // Pawns can only move diagonally if they're capturing a piece
+      // Pawns can only move diagonally if they're capturing a piece or taking
+      // en_passant_tile
       bool can_capture =
-          board_can_capture_or_move(_board, pos, tpos) && board[tpos];
+          !is_self_capture(_board, pos, tpos) && board[tpos];
+      can_capture = can_capture || tpos == _board.en_passant_tile;
 
       if (can_capture)
         (*moves)[idx++] = move_new(pos, tpos);
@@ -205,7 +220,7 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves,
     {
       int tpos_88 = topos88(pos) + slide_offset[i];
       while (!(tpos_88 & 0x88) &&
-             board_can_capture_or_move(_board, pos, topos64(tpos_88)))
+             !is_self_capture(_board, pos, topos64(tpos_88)))
       {
         (*moves)[idx++] = move_new(pos, topos64(tpos_88));
 
@@ -249,8 +264,8 @@ end:
 
 void board_get_moves_all(Board board, Move** moves, size_t* nmoves, int flags)
 {
-  size_t idx = 0, current_alloc = 512;
-  *moves = malloc(512 * sizeof(**moves));
+  size_t idx = 0, current_alloc = 64;
+  *moves = malloc(current_alloc * sizeof(**moves));
 
   for (int i = 0; i < 64; i++)
   {

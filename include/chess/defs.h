@@ -45,6 +45,7 @@ typedef struct
 typedef struct
 {
   ChessPiece state[64];
+  int en_passant_tile; // Set to -1 if en passant not possible
 } Board;
 
 enum
