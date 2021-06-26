@@ -64,5 +64,5 @@ if (CHESS_BUILD_TESTS)
 
   add_executable(test_engine test/engine.c)
   target_link_libraries(test_engine ${CHECK_LIBRARIES} ${PROJECT_NAME} ipc)
-  add_test(NAME enging COMMAND test_socket)
+  add_test(NAME engine COMMAND test_engine)
 endif()
