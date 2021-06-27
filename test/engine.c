@@ -417,6 +417,20 @@ START_TEST(test_castling)
 
   for (int i = 0; i < expected_nmoves; i++)
     fail_if(!found_moves[i], "!found_moves[%d]", i);
+
+  // Check that white can castle too
+  board_new_from_string(&board, "r n b q k b n r"
+                                "p p p p p p p p"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 P 0 0 0"
+                                "0 0 0 0 0 N 0 0"
+                                "P P P P B P P P"
+                                "R N B Q K 0 0 R");
+
+  board_get_moves(board, topos64(0x74), &moves, &nmoves, ConsiderChecks);
+
+  ck_assert_int_eq(nmoves, 2);
 }
 END_TEST
 
@@ -448,6 +462,26 @@ START_TEST(test_pinned_check)
 }
 END_TEST
 
+START_TEST(test_starting_moves)
+{
+  Board board;
+  Move* moves;
+  size_t nmoves = 0;
+
+  board_new_from_string(&board, "r n b q k b n r"
+                                "p p p p p p p p"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "P P P P P P P P"
+                                "R N B Q K B N R");
+  board_get_moves_all(board, &moves, &nmoves, GetMovesWhite | GetMovesBlack);
+
+  ck_assert_int_eq(nmoves, 40);
+}
+END_TEST
+
 int main(int argc, char** argv)
 {
   Suite* s1 = suite_create("Engine");
@@ -464,6 +498,7 @@ int main(int argc, char** argv)
   tcase_add_test(tc1_1, test_king_moves);
   tcase_add_test(tc1_1, test_castling);
   tcase_add_test(tc1_1, test_pinned_check);
+  tcase_add_test(tc1_1, test_starting_moves);
   suite_add_tcase(s1, tc1_1);
 
   srunner_run_all(sr, CK_ENV);
