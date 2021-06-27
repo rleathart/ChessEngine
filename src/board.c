@@ -71,12 +71,12 @@ void board_update(Board* board, Move* move)
   {
     if (board->can_castle_qs[isWhite] && move->to - move->from == -2)
     {
-      board->state[move->to + 1] = ChessPieceCastle;
+      board->state[move->to + 1] = ChessPieceCastle | (isWhite ? ChessPieceIsWhite : 0);
       board->state[move->to - 2] = ChessPieceNone;
     }
     else if (board->can_castle_ks[isWhite] && move->to - move->from == 2)
     {
-      board->state[move->to - 1] = ChessPieceCastle;
+      board->state[move->to - 1] = ChessPieceCastle | (isWhite ? ChessPieceIsWhite : 0);
       board->state[move->to + 1] = ChessPieceNone;
     }
   }
@@ -280,12 +280,13 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves,
         break;
 
       // There needs to actually be a castle in the corner square
-      if (!(board[topos64fr(castling_ks ? 7 : 0, isWhite ? 7 : 0)]))
+      if (!(board[topos64fr(castling_ks ? 7 : 0, isWhite ? 7 : 0)] & ChessPieceCastle))
         break;
 
       // Can't castle if we're in check
-      if (position_of_checker(_board, isWhite) >= 0)
-        break;
+      if (flags & ConsiderChecks)
+        if (position_of_checker(_board, isWhite) >= 0)
+          break;
 
       bool can_castle = true;
       Board board_cpy = _board;
@@ -300,8 +301,9 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves,
         // castle
         Move tmp = move_new(pos, tpos);
         board_update(&board_cpy, &tmp);
-        if (position_of_checker(board_cpy, isWhite) >= 0)
-          can_castle = false;
+        if (flags & ConsiderChecks)
+          if (position_of_checker(board_cpy, isWhite) >= 0)
+            can_castle = false;
         board_cpy = _board;
       }
 
