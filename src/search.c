@@ -4,6 +4,7 @@
 #include <chess/tree.h>
 
 #include <stdlib.h>
+#include <math.h>
 
 int minimax(Board board, size_t depth, s64 alpha, s64 beta,
             bool maximising_player, Move* out_move, Node* out_node)
@@ -46,7 +47,7 @@ int minimax(Board board, size_t depth, s64 alpha, s64 beta,
         minimax(new_board, depth - 1, alpha, beta, !maximising_player, NULL, new_node);
     new_board = board; // Restore board state after trying a move
     int last_best_eval = best_eval;
-    best_eval = maximising_player ? max(best_eval, eval) : min(best_eval, eval);
+    best_eval = maximising_player ? fmax(best_eval, eval) : fmin(best_eval, eval);
     if (best_eval != last_best_eval)
     {
       best_eval_i = i;
@@ -55,10 +56,10 @@ int minimax(Board board, size_t depth, s64 alpha, s64 beta,
     }
     if (maximising_player)
     {
-      alpha = max(alpha, eval);
+      alpha = fmax(alpha, eval);
     }
     else
-      beta = min(beta, eval);
+      beta = fmin(beta, eval);
     if (beta <= alpha)
       break;
   }

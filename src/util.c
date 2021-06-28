@@ -1,6 +1,9 @@
 #include <chess/util.h>
 #include <chess/piece.h>
 
+#include <stdlib.h>
+#include <string.h>
+
 #ifdef _WIN32
 #include <windows.h>
 #else
@@ -83,8 +86,8 @@ char* get_dotnet_pipe_name(char* name)
     strcat(pipename, tmpdir);
   else
     strcat(pipename, "/tmp/");
-  if (pipename[strlen(pipename) != '/'])
-    strcat(pipename, '/');
+  if (pipename[strlen(pipename) - 1] != '/')
+    strcat(pipename, "/");
   strcat(pipename, "CoreFxPipe_");
   strcat(pipename, name);
 #endif

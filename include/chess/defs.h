@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <limits.h>
 
 extern FILE* logger_fd;
 extern char* logger_filepath;
