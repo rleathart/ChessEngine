@@ -6,28 +6,36 @@ enum
   MessageSleepMs = 10
 };
 
-ipcError message_receive(Socket* sock, void** buffer, size_t* buflen)
+ipcError message_receive(Message* mess, Socket* sock)
 {
   int message_len = 0;
   while (socket_read_bytes(sock, &message_len, 4) == ipcErrorSocketHasMoreData)
     sleep_ms(MessageSleepMs);
-  // Maybe have another few bytes here for indicating the type of message?
-  *buffer = malloc(message_len);
-  *buflen = message_len;
-  while (socket_read_bytes(sock, *buffer, message_len) ==
+
+  while (socket_read_bytes(sock, &mess->type, 4) == ipcErrorSocketHasMoreData)
+    sleep_ms(MessageSleepMs);
+
+  mess->data = malloc(message_len);
+  mess->len = message_len;
+
+  while (socket_read_bytes(sock, mess->data, message_len) ==
          ipcErrorSocketHasMoreData)
     sleep_ms(MessageSleepMs);
   return ipcErrorNone;
 }
 
-ipcError message_send(Socket* sock, Message message)
+ipcError message_send(Message mess, Socket* sock)
 {
-  while (socket_write_bytes(sock, &(message.lengthInBytes),
-                            sizeof(message.lengthInBytes)) ==
+  while (socket_write_bytes(sock, &(mess.len),
+                            sizeof(mess.len)) ==
          ipcErrorSocketHasMoreData)
-    ;
-  while (socket_write_bytes(sock, message.data, message.lengthInBytes) ==
+    sleep_ms(MessageSleepMs);
+  while (socket_write_bytes(sock, &(mess.type),
+                            sizeof(mess.type)) ==
          ipcErrorSocketHasMoreData)
-    ;
+    sleep_ms(MessageSleepMs);
+  while (socket_write_bytes(sock, mess.data, mess.len) ==
+         ipcErrorSocketHasMoreData)
+    sleep_ms(MessageSleepMs);
   return ipcErrorNone;
 }

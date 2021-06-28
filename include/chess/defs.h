@@ -1,11 +1,13 @@
 #pragma once
 
-#include <stdio.h>
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
 
 extern FILE* logger_fd;
 extern char* logger_filepath;
+
+extern int depth;
 
 typedef uint8_t u8;
 typedef uint16_t u16;
@@ -18,9 +20,27 @@ typedef int64_t s64;
 
 typedef u8 byte;
 
+typedef enum
+{
+  MessageTypeLegalMoveRequest,
+  MessageTypeLegalMoveReply,
+  MessageTypeMakeMoveRequest,
+  MessageTypeMakeMoveReply,
+  MessageTypeBestMoveRequest,
+  MessageTypeBestMoveReply,
+  MessageTypeBoardStateRequest,
+  MessageTypeBoardStateReply,
+  MessageTypeGetMovesRequest,
+  MessageTypeGetMovesReply,
+  // We need to use this to pad out the enum to make sure it's always
+  // sizeof(int)
+  __MessageTypeSizeMarker = 1 << (sizeof(int) - 1),
+} MessageType;
+
 typedef struct
 {
-  u32 lengthInBytes;
+  u32 len; // Size of data in bytes
+  MessageType type;
   byte* data;
 } Message;
 
@@ -68,7 +88,8 @@ struct Node
   int best_child; // Holds index to best child
 
   Move move;
-  int value; // The value of the best line that can be taken from this board state
+  int value;    // The value of the best line that can be taken from this board
+                // state
   bool isWhite; // Is it white's turn after this move
 };
 
