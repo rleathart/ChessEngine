@@ -482,6 +482,33 @@ START_TEST(test_starting_moves)
 }
 END_TEST
 
+START_TEST(test_checkmate)
+{
+  Board board;
+  Move* moves;
+  size_t nmoves = 0;
+
+  board_new_from_string(&board, "r 0 b 0 k b n r"
+                                "p p p p 0 p p p"
+                                "0 0 n 0 0 0 0 0"
+                                "0 0 0 0 p 0 0 0"
+                                "0 0 0 0 0 0 P q"
+                                "0 0 0 0 0 P 0 0"
+                                "P P P P P 0 0 P"
+                                "R N B Q K B N R");
+
+  for (int i = 0; i < 64; i++)
+  {
+    if (!(board.state[i] & ChessPieceIsWhite))
+      continue;
+    board_get_moves(board, i, &moves, &nmoves, ConsiderChecks);
+
+    fail_if(nmoves != 0, "Found move %s at %d", move_tostring(moves[0]), i);
+  }
+
+}
+END_TEST
+
 int main(int argc, char** argv)
 {
   Suite* s1 = suite_create("Engine");
@@ -499,6 +526,7 @@ int main(int argc, char** argv)
   tcase_add_test(tc1_1, test_castling);
   tcase_add_test(tc1_1, test_pinned_check);
   tcase_add_test(tc1_1, test_starting_moves);
+  tcase_add_test(tc1_1, test_checkmate);
   suite_add_tcase(s1, tc1_1);
 
   srunner_run_all(sr, CK_ENV);
