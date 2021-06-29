@@ -1,6 +1,7 @@
 #include <chess/board.h>
 #include <chess/search.h>
 #include <chess/util.h>
+#include <chess/tree.h>
 
 #include <ctype.h>
 #include <stdio.h>
@@ -216,8 +217,9 @@ Move* board_calculate_line(Board board, int depth, bool maximising_player)
   Move* line = calloc(depth, sizeof(Move));
   for (int i = 0; i < depth; i++)
   {
-    minimax(board, depth - i, -INT_MAX, INT_MAX, maximising_player, &best_move,
-            NULL);
+    Node* root = node_new(NULL, move_new(-1, -1), maximising_player);
+    minimax(board, depth - i, -INT_MAX, INT_MAX, maximising_player, root);
+    best_move = node_get_best_move(*root);
     board_update(&board, &best_move);
     line[i] = best_move;
     maximising_player = !maximising_player;

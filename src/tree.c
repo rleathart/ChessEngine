@@ -63,6 +63,11 @@ Node* node_new(Node* parent, Move move, bool isWhite)
   return node;
 }
 
+Move node_get_best_move(Node node)
+{
+  return node.children[node.best_child]->move;
+}
+
 int tree_free(Tree* tree)
 {
   int nodes_freed = node_free(tree->root);

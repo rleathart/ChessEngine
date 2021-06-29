@@ -53,12 +53,12 @@ int main(int argc, char* argv[])
   Node* root = node_new(NULL, move_new(-1, -1), isWhitesTurn);
   Tree* tree = tree_new(root, board);
 
-  Move best_move;
   clock_t start_time = clock();
   printf("minimax: %d\n",
-         minimax(board, depth, -INT_MAX, INT_MAX, true, &best_move, root));
+         minimax(board, depth, -INT_MAX, INT_MAX, true, root));
   clock_t end_time = clock();
   double total_time = (double)(end_time - start_time) / CLOCKS_PER_SEC;
+  Move best_move = node_get_best_move(*root);
   printf("Best move: %s\n\n", move_tostring(best_move));
   printf("Time taken: %f\n\n", total_time);
 
@@ -122,7 +122,9 @@ int main(int argc, char* argv[])
           mess_out.type = MessageTypeBestMoveReply;
           mess_out.len = sizeof(Move);
           mess_out.data = malloc(mess_out.len);
-          minimax(board, depth, -INT_MAX, INT_MAX, false, &move, NULL);
+          Node* root = node_new(NULL, move_new(-1, -1), false);
+          minimax(board, depth, -INT_MAX, INT_MAX, false, root);
+          move = node_get_best_move(*root);
           board_update(&board, &move);
           printf("Server move: %s\n", move_tostring(move));
           printf("%s\n", board_tostring(board));
