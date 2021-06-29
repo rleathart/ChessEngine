@@ -1,6 +1,8 @@
+#include "chess/defs.h"
 #include <check.h>
 #include <chess/board.h>
 #include <chess/util.h>
+#include <stdlib.h>
 
 START_TEST(test_pawn_moves)
 {
@@ -505,7 +507,102 @@ START_TEST(test_checkmate)
 
     fail_if(nmoves != 0, "Found move %s at %d", move_tostring(moves[0]), i);
   }
+}
+END_TEST
 
+void rook_nmoves(Board board, int defending_rook_pos)
+{
+  Move* moves;
+  size_t nmoves;
+  int expected_nmoves = 1;
+
+  board_get_moves(board, defending_rook_pos, &moves, &nmoves, ConsiderChecks);
+  ck_assert_int_eq(nmoves, expected_nmoves);
+  free(moves);
+}
+// Does knight correctly put king in check.
+START_TEST(test_knight_check_king)
+{
+  Board board;
+  board_new_from_string(&board, "0 n 0 0 0 0 0 R"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 K 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0");
+  rook_nmoves(board, 7);
+}
+END_TEST
+START_TEST(test_queen_vertical_check_king)
+{
+  Board board;
+  board_new_from_string(&board, "q 0 0 0 0 0 0 R"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 K 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0");
+  rook_nmoves(board, 7);
+}
+END_TEST
+START_TEST(test_queen_horizontal_check_king)
+{
+  Board board;
+  board_new_from_string(&board, "0 0 q 0 0 0 0 R"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 K 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0");
+  rook_nmoves(board, 7);
+}
+END_TEST
+START_TEST(test_bishop_check_king)
+{
+  Board board;
+  board_new_from_string(&board, "b 0 0 0 0 0 0 R"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 K 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0");
+  rook_nmoves(board, 7);
+}
+END_TEST
+START_TEST(test_castle_check_king)
+{
+  Board board;
+  board_new_from_string(&board, "0 0 r 0 0 0 0 R"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 K 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0");
+  rook_nmoves(board, 7);
+}
+END_TEST
+START_TEST(test_pawn_check_king)
+{
+  Board board;
+  board_new_from_string(&board, "0 0 0 0 0 0 0 0"
+                                "0 p 0 0 0 0 0 R"
+                                "0 0 K 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0");
+  rook_nmoves(board, 15);
 }
 END_TEST
 
@@ -527,6 +624,14 @@ int main(int argc, char** argv)
   tcase_add_test(tc1_1, test_pinned_check);
   tcase_add_test(tc1_1, test_starting_moves);
   tcase_add_test(tc1_1, test_checkmate);
+
+  tcase_add_test(tc1_1, test_knight_check_king);
+  tcase_add_test(tc1_1, test_queen_vertical_check_king);
+  tcase_add_test(tc1_1, test_queen_horizontal_check_king);
+  tcase_add_test(tc1_1, test_bishop_check_king);
+  tcase_add_test(tc1_1, test_castle_check_king);
+  tcase_add_test(tc1_1, test_pawn_check_king);
+
   suite_add_tcase(s1, tc1_1);
 
   srunner_run_all(sr, CK_ENV);
