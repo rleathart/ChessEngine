@@ -21,16 +21,48 @@ void tree_print_best_line(Tree tree)
   }
   printf("Done\n\n");
 }
-void tree_traverse(Node root)
+
+bool tree_get_leaves_condition(Node node)
 {
-  for (int i = 0; i < root.nchilds; i++)
+  if (node.nchilds > 0)
+    return false;
+  return true;
+}
+
+// free the returned pointer
+Node** tree_traverse(Node* root, bool (*condition)(Node), size_t* length)
+{
+  Node** node = NULL;
+  size_t child_length = 0;
+  *length = 0;
+  for (int i = 0; i < root->nchilds; i++)
   {
-    tree_traverse(*(root.children[i]));
-    if (root.nchilds - 1 == i)
-      printf("\n\nlayer\n\n");
+    Node** child_nodes = tree_traverse(root->children[i], condition, &child_length);
+    int orig_length = *length;
+    *length = *length + child_length;
+    if (child_length > 0)
+    {
+      node = realloc(node, (*length) * sizeof(Node*));
+      for (int i = *length - child_length; i < *length; i++)
+        node[i] = child_nodes[i - orig_length];
+    }
   }
-  printf("root.move: %s\n", move_tostring(root.move));
-  printf("root.value: %d\n", root.value);
+
+  if (condition(*root))
+  {
+    *length = *length + 1;
+    node = realloc(node, (*length) * sizeof(Node*));
+    node[*length - 1] = root;
+  }
+  return node;
+}
+
+size_t node_find_depth(Node* node)
+{
+  int depth = 0;
+  if (node->parent)
+    depth = node_find_depth(node->parent) + 1;
+  return depth;
 }
 
 Tree* tree_new(Node* node, Board board)
