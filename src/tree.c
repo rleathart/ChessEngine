@@ -68,22 +68,24 @@ Move node_get_best_move(Node node)
   return node.children[node.best_child]->move;
 }
 
-int tree_free(Tree* tree)
+int tree_free(Tree** tree)
 {
-  int nodes_freed = node_free(tree->root);
-  free(tree);
+  int nodes_freed = node_free(&((*tree)->root));
+  free(*tree);
+  *tree = NULL;
   return nodes_freed;
 }
 
-int node_free(Node* node)
+int node_free(Node** node)
 {
-  int children_to_kill = node->nchilds;
-  int children_killed = 0;
-  for (int i = 0; i < children_to_kill; i++)
-    children_killed += node_free(node->children[i]);
-  if (node->parent)
-    node->parent->nchilds--;
-  free(node->children);
-  free(node);
-  return ++children_killed;
+  int children_to_free = (*node)->nchilds;
+  int children_freed = 0;
+  for (int i = 0; i < children_to_free; i++)
+    children_freed += node_free(&((*node)->children[i]));
+  if ((*node)->parent) // @@FIXME Actually remove children from parent
+    (*node)->parent->nchilds--;
+  free((*node)->children);
+  free(*node);
+  *node = NULL;
+  return ++children_freed;
 }

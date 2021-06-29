@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
 
   tree_print_best_line(*tree);
 
-  int nodes_freed = tree_free(tree);
+  int nodes_freed = tree_free(&tree);
 
   for (;;)
   {
