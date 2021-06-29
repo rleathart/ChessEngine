@@ -621,9 +621,7 @@ START_TEST(test_same_move)
                                 "0 0 0 0 0 0 0 0"
                                 "0 0 0 0 0 0 0 0");
   Move tmp = move_new(topos64(0x11), topos64(0x15));
-  printf("%s\n", board_tostring(board));
   board_update(&board, &tmp);
-  printf("%s\n", board_tostring(board));
 
   board_get_moves_all(board, &moves, &nmoves, GetMovesBlack | GetMovesWhite);
 
