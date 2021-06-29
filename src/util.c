@@ -53,27 +53,6 @@ u8 torank88(u8 pos88)
 
 // }}}
 
-ChessPiece* parse_fen(char* fen)
-{
-  ChessPiece* pieces = calloc(64, sizeof(ChessPiece));
-  int idx = 0;
-  for (char c = *fen; c; c = *(++fen))
-  {
-    if (c == '/')
-      continue;
-    if (c == ' ')
-      break;
-
-    char cstr[] = {c, '\0'};
-    if (atoi(cstr))
-      for (int i = 0; i < atoi(cstr); i++)
-        pieces[idx++] = ChessPieceNone;
-    else
-      pieces[idx++] = piece_from_char(c);
-  }
-  return pieces;
-}
-
 char* get_dotnet_pipe_name(char* name)
 {
   char* pipename = calloc(1, 4096);

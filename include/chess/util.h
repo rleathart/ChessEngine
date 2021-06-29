@@ -15,4 +15,3 @@ u8 torank88(u8 pos88);
 
 char* get_dotnet_pipe_name(char* name);
 void sleep_ms(int ms);
-ChessPiece* parse_fen(char* fen);

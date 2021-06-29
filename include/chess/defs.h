@@ -66,12 +66,16 @@ typedef struct
 typedef struct
 {
   ChessPiece state[64];
+  bool white_to_move;
   int en_passant_tile; // Set to -1 if en passant not possible
 
   // Stores whether castling is possible for each player, 1st element is black,
   // 2nd is white. This allows can_castle_ks[isWhite]
   bool can_castle_qs[2];
   bool can_castle_ks[2];
+
+  int halfmove_clock;
+  int fullmove_count;
 } Board;
 
 enum

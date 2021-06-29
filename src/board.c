@@ -2,6 +2,7 @@
 #include <chess/search.h>
 #include <chess/util.h>
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,17 +12,120 @@ static void board_init(Board* board)
 {
   memset(board, 0, sizeof(*board));
   board->en_passant_tile = -1;
+  board->white_to_move = true;
   for (int i = 0; i < 2; i++)
     board->can_castle_ks[i] = board->can_castle_qs[i] = true;
+}
+
+static void parse_fen(Board* board, char* fen)
+{
+  board_init(board);
+  int idx = 0;
+  int stage = 0; // Which segment are we parsing? (board, turn, castling, ...)
+
+  for (int i = 0; i < 2; i++)
+    board->can_castle_ks[i] = board->can_castle_qs[i] = false;
+
+  char ep_str[3] = {0};
+  char hm_str[32] = {0};
+  char fm_str[32] = {0};
+  for (char c = *fen; c; c = *(++fen))
+  {
+    if (c == '/')
+      continue;
+
+    if (c == ' ')
+    {
+      stage++;
+      continue;
+    }
+
+    switch (stage)
+    {
+    case 0: // Board layout
+      char cstr[] = {c, '\0'};
+      if (atoi(cstr))
+        for (int i = 0; i < atoi(cstr); i++)
+          board->state[idx++] = ChessPieceNone;
+      else
+        board->state[idx++] = piece_from_char(c);
+      break;
+    case 1: // Turn
+      if (c == 'w')
+        board->white_to_move = true;
+      else if (c == 'b')
+        board->white_to_move = false;
+      break;
+    case 2: // Castling
+      switch (c)
+      {
+      case 'K':
+        board->can_castle_ks[1] = true;
+        break;
+      case 'k':
+        board->can_castle_ks[0] = true;
+        break;
+      case 'Q':
+        board->can_castle_qs[1] = true;
+        break;
+      case 'q':
+        board->can_castle_qs[0] = true;
+        break;
+      default:
+        break;
+      }
+      break;
+
+    case 3: // en passant
+      if (c == '-')
+      {
+        board->en_passant_tile = -1;
+        break;
+      }
+
+      idx = 0;
+      while (isdigit(c))
+      {
+        ep_str[idx++] = c;
+        c = *(++fen);
+      }
+      board->en_passant_tile = atoi(ep_str);
+      c = *(--fen); // Since we increment at the end of the for loop, need to
+                    // decrement here
+      break;
+
+    case 4: // Halfmove clock
+      idx = 0;
+      while (isdigit(c))
+      {
+        hm_str[idx++] = c;
+        c = *(++fen);
+      }
+      board->halfmove_clock = atoi(hm_str);
+      c = *(--fen);
+      break;
+
+    case 5: // Fullmove count
+      idx = 0;
+      while (isdigit(c))
+      {
+        fm_str[idx++] = c;
+        c = *(++fen);
+      }
+      board->fullmove_count = atoi(fm_str);
+      c = *(--fen);
+      break;
+
+    default:
+      break;
+    }
+  }
 }
 
 void board_new(Board* board, char* fen)
 {
   board_init(board);
-
-  ChessPiece* pieces = parse_fen(fen);
-  for (int i = 0; i < 64; i++)
-    board->state[i] = pieces[i];
+  parse_fen(board, fen);
 }
 
 // Initialises a board from the string representation of a board.
@@ -71,12 +175,14 @@ void board_update(Board* board, Move* move)
   {
     if (board->can_castle_qs[isWhite] && move->to - move->from == -2)
     {
-      board->state[move->to + 1] = ChessPieceCastle | (isWhite ? ChessPieceIsWhite : 0);
+      board->state[move->to + 1] =
+          ChessPieceCastle | (isWhite ? ChessPieceIsWhite : 0);
       board->state[move->to - 2] = ChessPieceNone;
     }
     else if (board->can_castle_ks[isWhite] && move->to - move->from == 2)
     {
-      board->state[move->to - 1] = ChessPieceCastle | (isWhite ? ChessPieceIsWhite : 0);
+      board->state[move->to - 1] =
+          ChessPieceCastle | (isWhite ? ChessPieceIsWhite : 0);
       board->state[move->to + 1] = ChessPieceNone;
     }
   }
@@ -280,7 +386,8 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves,
         break;
 
       // There needs to actually be a castle in the corner square
-      if (!(board[topos64fr(castling_ks ? 7 : 0, isWhite ? 7 : 0)] & ChessPieceCastle))
+      if (!(board[topos64fr(castling_ks ? 7 : 0, isWhite ? 7 : 0)] &
+            ChessPieceCastle))
         break;
 
       // Can't castle if we're in check

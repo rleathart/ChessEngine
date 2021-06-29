@@ -509,6 +509,48 @@ START_TEST(test_checkmate)
 }
 END_TEST
 
+START_TEST(test_same_move)
+{
+  Board board;
+  Move* moves;
+  size_t nmoves = 0;
+
+  board_new_from_string(&board, "0 0 0 0 0 r 0 k"
+                                "0 R 0 0 0 0 0 0"
+                                "0 0 0 0 0 K P P"
+                                "0 P 0 0 0 P N 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0");
+  Move tmp = move_new(topos64(0x11), topos64(0x15));
+  printf("%s\n", board_tostring(board));
+  board_update(&board, &tmp);
+  printf("%s\n", board_tostring(board));
+
+  board_get_moves_all(board, &moves, &nmoves, GetMovesBlack | GetMovesWhite);
+
+  for (int i = 0; i < nmoves; i++)
+    fail_if(moves[i].from == topos64(0x11));
+}
+END_TEST
+
+START_TEST(test_parse_fen)
+{
+  Board board;
+  board_new(&board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b Kkq 41 45 15");
+
+  fail_if(board.can_castle_ks[1] != true);
+  fail_if(board.can_castle_qs[1] != false);
+  fail_if(board.can_castle_ks[0] != true);
+  fail_if(board.can_castle_qs[0] != true);
+  fail_if(board.white_to_move != false);
+  ck_assert_int_eq(board.en_passant_tile, 41);
+  ck_assert_int_eq(board.halfmove_clock, 45);
+  ck_assert_int_eq(board.fullmove_count, 15);
+}
+END_TEST
+
 int main(int argc, char** argv)
 {
   Suite* s1 = suite_create("Engine");
@@ -527,6 +569,8 @@ int main(int argc, char** argv)
   tcase_add_test(tc1_1, test_pinned_check);
   tcase_add_test(tc1_1, test_starting_moves);
   tcase_add_test(tc1_1, test_checkmate);
+  tcase_add_test(tc1_1, test_same_move);
+  tcase_add_test(tc1_1, test_parse_fen);
   suite_add_tcase(s1, tc1_1);
 
   srunner_run_all(sr, CK_ENV);
