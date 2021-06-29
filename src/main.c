@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 /*
  * ###########################################################################
@@ -27,7 +28,7 @@
  */
 
 char* sockname = "ChessIPC";
-int depth = 4;
+int depth = 5;
 
 int main(int argc, char* argv[])
 {
@@ -53,9 +54,13 @@ int main(int argc, char* argv[])
   Tree* tree = tree_new(root, board);
 
   Move best_move;
+  clock_t start_time = clock();
   printf("minimax: %d\n",
          minimax(board, depth, -INT_MAX, INT_MAX, true, &best_move, root));
+  clock_t end_time = clock();
+  double total_time = (double)(end_time - start_time) / CLOCKS_PER_SEC;
   printf("Best move: %s\n\n", move_tostring(best_move));
+  printf("Time taken: %f\n\n", total_time);
 
   tree_print_best_line(*tree);
 

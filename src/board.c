@@ -248,33 +248,56 @@ static int find_king(Board board, bool isWhite)
   return -1;
 }
 
+static int typed_pos_of_checker(Board board, int king_pos, ChessPiece attacker_type)
+{
+  Move* moves;
+  size_t nmoves;
+  bool is_white = board.state[king_pos] & ChessPieceIsWhite;
+  attacker_type &= ~ChessPieceIsWhite;
+
+  // We want the colour of the king but the type of the attacker
+  board.state[king_pos] = attacker_type | board.state[king_pos] & ChessPieceIsWhite;
+
+  board_get_moves(board, king_pos, &moves, &nmoves, 0);
+  for (int i = 0; i < nmoves; i++)
+  {
+    int frompos = moves[i].to;
+    if (board.state[frompos] & (attacker_type))
+    {
+      if (is_white && (board.state[frompos] & ChessPieceIsWhite) == 0)
+        return frompos;
+      if (!is_white && (board.state[frompos] & ChessPieceIsWhite) != 0)
+        return frompos;
+    }
+  }
+  free(moves);
+  return -1;
+}
+
 /// @return position of piece that is checking the king or -1 if the king is not
 ///         in check
 static int position_of_checker(Board board, bool isWhite)
 {
+  int frompos;
   int king_pos = find_king(board, isWhite);
-  for (int i = 0; i < 64; i++)
-  {
-    if (board.state[i] == ChessPieceNone)
-      continue;
-    // pieces cannot check their own king
-    if (isWhite && (board.state[i] & ChessPieceIsWhite))
-      continue;
-    if (!isWhite && !(board.state[i] & ChessPieceIsWhite))
-      continue;
 
-    Move* moves;
-    size_t nmoves = 0;
-    board_get_moves(board, i, &moves, &nmoves, 0);
-    for (int j = 0; j < nmoves; j++)
-      if (moves[j].to == king_pos)
-      {
-        free(moves);
-        return i;
-      }
-    free(moves);
-  }
-  return -1;
+  frompos = typed_pos_of_checker(board, king_pos, ChessPieceQueen);
+  if (frompos >= 0)
+    return frompos;
+  frompos = typed_pos_of_checker(board, king_pos, ChessPieceCastle);
+  if (frompos >= 0)
+    return frompos;
+  frompos = typed_pos_of_checker(board, king_pos, ChessPieceBishop);
+  if (frompos >= 0)
+    return frompos;
+  frompos = typed_pos_of_checker(board, king_pos, ChessPieceKnight);
+  if (frompos >= 0)
+    return frompos;
+  frompos = typed_pos_of_checker(board, king_pos, ChessPiecePawn);
+  if (frompos >= 0)
+    return frompos;
+
+  return frompos;
 }
 
 // @@Document Explain why we take Move**
@@ -426,9 +449,8 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves,
     Board board_after = _board;
     for (int i = 0; i < idx; i++)
     {
-      int test;
       board_update(&board_after, &((*moves)[i]));
-      if (position_of_checker(board_after, board[pos] & ChessPieceIsWhite) >= 0)
+      if ((position_of_checker(board_after, board[pos] & ChessPieceIsWhite)) >= 0)
       {
         // This move is invalid so shift all elements down one position
         // (equivalent to removing the item from the array)
