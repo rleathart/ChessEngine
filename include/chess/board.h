@@ -15,3 +15,5 @@ void board_get_moves_all(Board board, Move** moves, size_t* nmoves, int flags);
 
 char* board_tostring(Board board);
 Move* board_calculate_line(Board board, int depth, bool maximising_player);
+
+bool is_in_check(Board board, bool isWhite);

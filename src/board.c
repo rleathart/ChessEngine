@@ -298,8 +298,16 @@ static int position_of_checker(Board board, bool isWhite)
   frompos = typed_pos_of_checker(board, king_pos, ChessPiecePawn);
   if (frompos >= 0)
     return frompos;
+  frompos = typed_pos_of_checker(board, king_pos, ChessPieceKing);
+  if (frompos >= 0)
+    return frompos;
 
   return frompos;
+}
+
+bool is_in_check(Board board, bool isWhite)
+{
+  return position_of_checker(board, isWhite) >= 0;
 }
 
 // @@Document Explain why we take Move**
