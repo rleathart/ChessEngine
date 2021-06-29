@@ -140,6 +140,16 @@ int main(int argc, char* argv[])
           memcpy(mess_out.data, moves, mess_out.len);
           break;
 
+        // Sets the board from a FEN string
+        case MessageTypeSetBoardRequest:
+          mess_out.type = MessageTypeSetBoardReply;
+          char* fen = (char*)mess_in.data;
+          board_new(&board, fen);
+          mess_out.len = 1;
+          mess_out.data = malloc(mess_out.len);
+          printf("%s\n", board_tostring(board));
+          break;
+
         default:
           break;
       }
