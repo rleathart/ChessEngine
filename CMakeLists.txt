@@ -43,6 +43,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
     PRIVATE src)
+include_directories(include $ENV{CMAKE_INSTALL_PREFIX}/include)
+link_directories($ENV{CMAKE_INSTALL_PREFIX}/lib)
 install(
   TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}Config
   ARCHIVE DESTINATION lib
@@ -54,7 +56,7 @@ install(EXPORT ${PROJECT_NAME}Config DESTINATION lib/cmake/${PROJECT_NAME})
 export(TARGETS ${PROJECT_NAME} FILE ${PROJECT_NAME}Config.cmake)
 
 add_executable(main src/main.c)
-target_link_libraries(main ${PROJECT_NAME} ipc)
+target_link_libraries(main ${PROJECT_NAME} ipc pthreadVC2)
 
 if (CHESS_BUILD_TESTS)
   find_package(PkgConfig REQUIRED)

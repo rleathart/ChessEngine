@@ -28,6 +28,10 @@ bool tree_get_leaves_condition(Node node)
     return false;
   return true;
 }
+bool tree_get_leaves_all(Node node)
+{
+  return true;
+}
 
 // free the returned pointer
 Node** tree_traverse(Node* root, bool (*condition)(Node), size_t* length)
@@ -65,11 +69,14 @@ size_t node_find_depth(Node* node)
   return depth;
 }
 
-Tree* tree_new(Node* node, Board board)
+Tree* tree_new(Node* node, Board board, size_t depth)
 {
   Tree* tree = malloc(sizeof(Tree));
   tree->root = node;
   tree->board = board;
+  tree->depth = depth;
+  tree->search_complete = false;
+  tree->is_searching = false;
   return tree;
 }
 

@@ -105,4 +105,7 @@ struct Tree
 {
   Node* root;
   Board board;
+  size_t depth;
+  bool search_complete;
+  bool is_searching;
 };

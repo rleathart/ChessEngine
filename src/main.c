@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <pthread.h>
 
 /*
  * ###########################################################################
@@ -29,6 +30,8 @@
 
 char* sockname = "ChessIPC";
 int depth = 5;
+bool g_player_moved = false;
+bool g_cancel_search = false;
 
 int main(int argc, char* argv[])
 {
@@ -51,7 +54,7 @@ int main(int argc, char* argv[])
   bool isWhitesTurn = true;
 
   Node* root = node_new(NULL, move_new(-1, -1), isWhitesTurn);
-  Tree* tree = tree_new(root, board);
+  Tree* tree = tree_new(root, board, depth);
 
   clock_t start_time = clock();
   printf("minimax: %d\n",
@@ -65,6 +68,11 @@ int main(int argc, char* argv[])
   tree_print_best_line(*tree);
 
   int nodes_freed = tree_free(&tree);
+
+  Tree** precomp_trees = NULL;
+  size_t nprecomp_trees = 0;
+  Move client_move;
+  pthread_t thread;
 
   for (;;)
   {
@@ -113,6 +121,7 @@ int main(int argc, char* argv[])
           mess_out.len = 64 * sizeof(ChessPiece);
           mess_out.data = malloc(mess_out.len);
           move = *(Move*)mess_in.data;
+          client_move = move;
           printf("Client move: %s\n", move_tostring(move));
           board_update(&board, &move);
           memcpy(mess_out.data, board.state, mess_out.len);
@@ -122,13 +131,58 @@ int main(int argc, char* argv[])
           mess_out.type = MessageTypeBestMoveReply;
           mess_out.len = sizeof(Move);
           mess_out.data = malloc(mess_out.len);
-          Node* root = node_new(NULL, move_new(-1, -1), false);
-          minimax(board, depth, -INT_MAX, INT_MAX, false, root);
-          move = node_get_best_move(*root);
+
+          g_player_moved = true;
+          Tree* precomp_tree;
+          Node* precomp_root;
+          for (int i = 0; i < nprecomp_trees; i++)
+          {
+            if (move_equals(precomp_trees[i]->root->move, client_move))
+            {
+              precomp_tree = precomp_trees[i];
+              precomp_root = precomp_trees[i]->root;
+            }
+          }
+          if (nprecomp_trees > 0 && precomp_tree->search_complete)
+          {
+            printf("search success...\n");
+            g_cancel_search = true;
+            pthread_join(thread, NULL);
+            g_cancel_search = false;
+            move = node_get_best_move(*precomp_root);
+          }
+          else if (nprecomp_trees > 0 && precomp_tree->is_searching)
+          {
+            printf("searching...\n");
+            pthread_join(thread, NULL);
+            move = node_get_best_move(*precomp_root);
+          }
+          else
+          {
+            printf("search failed...\n");
+            g_cancel_search = true;
+            pthread_join(thread, NULL);
+            g_cancel_search = false;
+            root = node_new(NULL, move_new(-1,-1), false);
+            minimax(board, depth, -INT_MAX, INT_MAX, false, root);
+            size_t count;
+            tree_traverse(root, tree_get_leaves_all, &count);
+            printf("num nodes: %lld\n", count);
+            move = node_get_best_move(*root);
+            node_free(&root);
+          }
+
           board_update(&board, &move);
           printf("Server move: %s\n", move_tostring(move));
           printf("%s\n", board_tostring(board));
           memcpy(mess_out.data, &move, mess_out.len);
+
+          for (int i = 0; i < nprecomp_trees; i++)
+          {
+            tree_free(&precomp_trees[i]);
+          }
+          g_player_moved = false;
+          thread = minimax_sub_boards_async(board, depth, true, &precomp_trees, &nprecomp_trees);
           break;
 
         case MessageTypeBoardStateRequest:
