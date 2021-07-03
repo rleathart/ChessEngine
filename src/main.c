@@ -126,7 +126,7 @@ int main(int argc, char* argv[])
         mess_out.type = MessageTypeBestMoveReply;
         mess_out.len = sizeof(Move);
         mess_out.data = malloc(mess_out.len);
-        Node* server_root = node_new(NULL, move, false);
+        Node* server_root = node_new(NULL, player_move, false);
         Tree* server_tree = tree_new(server_root, board, depth);
         move = search(server_tree);
         free(server_tree);
