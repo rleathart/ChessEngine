@@ -19,6 +19,10 @@
 #define EPRINT(fmt, ...) chess_logger(DebugLevelError, NULL, __LINE__, __FUNCTION__, fmt, __VA_ARGS__)
 
 #ifndef DEBUG
+#undef ILOG
+#undef DLOG
+#undef IPRINT
+#undef DPRINT
 #define ILOG(fmt, ...)
 #define DLOG(fmt, ...)
 #define IPRINT(fmt, ...)
