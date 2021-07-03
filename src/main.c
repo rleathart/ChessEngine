@@ -110,27 +110,27 @@ int main(int argc, char* argv[])
 
       case MessageTypeMakeMoveRequest:
         mess_out.type = MessageTypeMakeMoveReply;
-        mess_out.len = 64 * sizeof(ChessPiece);
+        mess_out.len = 1;
         mess_out.data = malloc(mess_out.len);
-        move = *(Move*)mess_in.data;
+        Move tmp = *(Move*)mess_in.data;
+        move = move_new(tmp.from, tmp.to);
+        ILOG("Client move: %s\n", move_tostring(move));
         player_move = move;
-        printf("Client move: %s\n", move_tostring(move));
         board_update(&board, &move);
-        DLOG("Board Updated:\n%s\n", board_tostring(board));
-        memcpy(mess_out.data, board.state, mess_out.len);
+        ILOG("Board Updated:\n%s\n", board_tostring(board));
         break;
 
       case MessageTypeBestMoveRequest:
         mess_out.type = MessageTypeBestMoveReply;
         mess_out.len = sizeof(Move);
         mess_out.data = malloc(mess_out.len);
-        Node* server_root = node_new(NULL, move, false);
+        Node* server_root = node_new(NULL, player_move, false);
         Tree* server_tree = tree_new(server_root, board, depth);
         move = search(server_tree);
         free(server_tree);
         board_update(&board, &move);
-        printf("Server move: %s\n", move_tostring(move));
-        printf("%s\n", board_tostring(board));
+        ILOG("Server move: %s\n", move_tostring(move));
+        ILOG("Board Updated:\n%s\n", board_tostring(board));
         memcpy(mess_out.data, &move, mess_out.len);
         break;
 
@@ -157,7 +157,23 @@ int main(int argc, char* argv[])
         board_new(&board, fen);
         mess_out.len = 1;
         mess_out.data = malloc(mess_out.len);
-        printf("%s\n", board_tostring(board));
+        ILOG("Board Set:\n%s\n", board_tostring(board));
+        break;
+
+      // @@FIXME This will mess up precomputation since promoting after move.
+      case MessageTypePromotionRequest:
+        mess_out.type = MessageTypePromotionReply;
+        ChessPiece piece = *(ChessPiece*)mess_in.data;
+        ILOG("Promoting to: %d\n", piece);
+        for (int i = 0; i < 8; i++)
+          if (board.state[i] & ChessPiecePawn)
+            board.state[i] = piece | (board.state[i] & ChessPieceIsWhite);
+        for (int i = topos64(0x70); i < 64; i++)
+          if (board.state[i] & ChessPiecePawn)
+            board.state[i] = piece | (board.state[i] & ChessPieceIsWhite);
+        mess_out.len = 1;
+        mess_out.data = malloc(mess_out.len);
+        ILOG("Board Promotion:\n%s\n", board_tostring(board));
         break;
 
       default:
@@ -165,10 +181,9 @@ int main(int argc, char* argv[])
       }
 
       message_send(mess_out, &sock);
-      /* free(mess_out.data); */
-      /* free(mess_in.data); */
+      free(mess_out.data);
+      free(mess_in.data);
     }
-
   }
 
   fclose(logger_fd);

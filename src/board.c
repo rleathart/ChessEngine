@@ -1,7 +1,8 @@
 #include <chess/board.h>
 #include <chess/search.h>
-#include <chess/util.h>
 #include <chess/tree.h>
+#include <chess/util.h>
+#include <chess/logging.h>
 
 #include <ctype.h>
 #include <stdio.h>
@@ -41,10 +42,11 @@ static void parse_fen(Board* board, char* fen)
       continue;
     }
 
+    char cstr[] = {c, '\0'};
+
     switch (stage)
     {
     case 0: // Board layout
-      char cstr[] = {c, '\0'};
       if (atoi(cstr))
         for (int i = 0; i < atoi(cstr); i++)
           board->state[idx++] = ChessPieceNone;
@@ -201,6 +203,17 @@ void board_update(Board* board, Move* move)
       board->can_castle_ks[isWhite] = false;
   }
 
+  // Pawn promotion
+  if (board->state[move->to] & ChessPiecePawn)
+  {
+    if (torank64(move->to) == (isWhite ? 0 : 7) && move->promotion)
+    {
+      ILOG("Promoting %d at %d to %d\n", board->state[move->to], move->to, move->promotion);
+      board->state[move->to] =
+          move->promotion | (isWhite ? ChessPieceIsWhite : 0);
+    }
+  }
+
   if (board->en_passant_tile >= 0 && move->to == board->en_passant_tile)
     board->state[move->to + (isWhite ? 8 : -8)] = ChessPieceNone;
 
@@ -250,7 +263,8 @@ static int find_king(Board board, bool isWhite)
   return -1;
 }
 
-static int typed_pos_of_checker(Board board, int king_pos, ChessPiece attacker_type)
+static int typed_pos_of_checker(Board board, int king_pos,
+                                ChessPiece attacker_type)
 {
   Move* moves;
   size_t nmoves;
@@ -258,7 +272,8 @@ static int typed_pos_of_checker(Board board, int king_pos, ChessPiece attacker_t
   attacker_type &= ~ChessPieceIsWhite;
 
   // We want the colour of the king but the type of the attacker
-  board.state[king_pos] = attacker_type | board.state[king_pos] & ChessPieceIsWhite;
+  board.state[king_pos] =
+      attacker_type | board.state[king_pos] & ChessPieceIsWhite;
 
   board_get_moves(board, king_pos, &moves, &nmoves, 0);
   for (int i = 0; i < nmoves; i++)
@@ -358,9 +373,25 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves,
 
     int tpos_88 = pos_88 + dirsgn * 16;
 
+    ChessPiece pieces[] = {ChessPieceCastle, ChessPieceKnight, ChessPieceBishop,
+                           ChessPieceQueen};
+
     // Pawns can only move forwards to an empty square
     if (!(tpos_88 & 0x88) && board[topos64(tpos_88)] == ChessPieceNone)
-      (*moves)[idx++] = move_new(pos, topos64(tpos_88));
+    {
+      // @@Rework make this only need one promotion if block
+      if (torank88(tpos_88) == (isWhite ? 0 : 7))
+      {
+        for (int i = 0; i < 4; i++)
+        {
+          Move promotion = move_new(pos, topos64(tpos_88));
+          promotion.promotion = pieces[i]; // Handle this in board update
+          (*moves)[idx++] = promotion;
+        }
+      }
+      else
+        (*moves)[idx++] = move_new(pos, topos64(tpos_88));
+    }
 
     int diagonals[] = {15, 17};
     for (int i = 0; i < 2; i++)
@@ -376,7 +407,19 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves,
       can_capture = can_capture || tpos == _board.en_passant_tile;
 
       if (can_capture)
-        (*moves)[idx++] = move_new(pos, tpos);
+      {
+        if (torank88(tpos_88) == (isWhite ? 0 : 7))
+        {
+          for (int i = 0; i < 4; i++)
+          {
+            Move promotion = move_new(pos, topos64(tpos_88));
+            promotion.promotion = pieces[i]; // Handle this in board update
+            (*moves)[idx++] = promotion;
+          }
+        }
+        else
+          (*moves)[idx++] = move_new(pos, tpos);
+      }
     }
   }
 
@@ -461,7 +504,8 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves,
     for (int i = 0; i < idx; i++)
     {
       board_update(&board_after, &((*moves)[i]));
-      if ((position_of_checker(board_after, board[pos] & ChessPieceIsWhite)) >= 0)
+      if ((position_of_checker(board_after, board[pos] & ChessPieceIsWhite)) >=
+          0)
       {
         // This move is invalid so shift all elements down one position
         // (equivalent to removing the item from the array)

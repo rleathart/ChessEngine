@@ -1,5 +1,4 @@
 #include <chess/logging.h>
-#include "defs.h"
 
 #include <stdarg.h>
 #include <stdio.h>
