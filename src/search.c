@@ -3,8 +3,7 @@
 #include <chess/move.h>
 #include <chess/evaluate.h>
 #include <chess/tree.h>
-
-#include "defs.h"
+#include <chess/logging.h>
 
 #include <stdlib.h>
 #include <math.h>
