@@ -34,6 +34,7 @@ set(SRC
   src/evaluate.c
   src/search.c
   src/tree.c
+  src/logging.c
   )
 
 add_library(${PROJECT_NAME} ${SRC})
