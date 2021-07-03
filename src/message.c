@@ -3,8 +3,6 @@
 #include <chess/util.h>
 #include <chess/logging.h>
 
-#include "defs.h"
-
 enum
 {
   MessageSleepMs = 10
