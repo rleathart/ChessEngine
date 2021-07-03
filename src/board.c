@@ -2,6 +2,7 @@
 #include <chess/search.h>
 #include <chess/tree.h>
 #include <chess/util.h>
+#include <chess/logging.h>
 
 #include <ctype.h>
 #include <stdio.h>
@@ -206,6 +207,7 @@ void board_update(Board* board, Move* move)
   {
     if (torank64(move->to) == (isWhite ? 0 : 7) && move->promotion)
     {
+      ILOG("Promoting %d at %d to %d\n", board->state[move->to], move->to, move->promotion);
       board->state[move->to] =
           move->promotion | (isWhite ? ChessPieceIsWhite : 0);
     }
