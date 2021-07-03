@@ -4,6 +4,8 @@
 #include <chess/evaluate.h>
 #include <chess/tree.h>
 
+#include "defs.h"
+
 #include <stdlib.h>
 #include <math.h>
 
@@ -11,6 +13,9 @@
 int minimax(Board board, size_t depth, s64 alpha, s64 beta,
             bool maximising_player, Node* out_node)
 {
+  // We don't want to print anything inside minimax
+  DebugLevel old_debug_level = t_debug_level;
+  t_debug_level = DebugLevelNone;
   int best_eval = maximising_player ? -INT_MAX : INT_MAX;
   Board new_board = board;
   Move* moves;
@@ -27,6 +32,7 @@ int minimax(Board board, size_t depth, s64 alpha, s64 beta,
 
     out_node->value = best_eval;
     free(moves);
+    t_debug_level = old_debug_level;
     return best_eval;
   }
 
@@ -35,6 +41,7 @@ int minimax(Board board, size_t depth, s64 alpha, s64 beta,
     best_eval = evaluate_board(board);
     out_node->value = best_eval;
     free(moves);
+    t_debug_level = old_debug_level;
     return best_eval;
   }
 
@@ -68,6 +75,7 @@ int minimax(Board board, size_t depth, s64 alpha, s64 beta,
   out_node->value = best_eval;
   out_node->best_child = best_eval_i;
 
+  t_debug_level = old_debug_level;
   return best_eval;
 }
 

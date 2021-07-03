@@ -650,6 +650,50 @@ START_TEST(test_parse_fen)
 }
 END_TEST
 
+START_TEST(test_promotion)
+{
+  Board board;
+  Move* moves;
+  size_t nmoves;
+  int expected_nmoves;
+  board_new_from_string(&board, "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 0 0 0 0 0 0 0"
+                                "0 k 0 0 0 0 0 0"
+                                "0 n n K 0 0 0 0"
+                                "0 0 0 p p 0 0 0"
+                                "0 0 R 0 0 0 0 0");
+  board_get_moves(board, topos64(0x63), &moves, &nmoves, ConsiderChecks);
+  expected_nmoves = 8; // 4 promotions for each move
+  ck_assert_int_eq(nmoves, expected_nmoves);
+
+  int idx = 0;
+  bool* found_moves = calloc(expected_nmoves, sizeof(bool));
+  for (int i = 0; i < nmoves; i++)
+  {
+    if (moves[i].to == topos64(0x72) && moves[i].promotion == ChessPieceKnight)
+      found_moves[idx++] = true;
+    if (moves[i].to == topos64(0x72) && moves[i].promotion == ChessPieceCastle)
+      found_moves[idx++] = true;
+    if (moves[i].to == topos64(0x72) && moves[i].promotion == ChessPieceBishop)
+      found_moves[idx++] = true;
+    if (moves[i].to == topos64(0x72) && moves[i].promotion == ChessPieceQueen)
+      found_moves[idx++] = true;
+    if (moves[i].to == topos64(0x73) && moves[i].promotion == ChessPieceKnight)
+      found_moves[idx++] = true;
+    if (moves[i].to == topos64(0x73) && moves[i].promotion == ChessPieceCastle)
+      found_moves[idx++] = true;
+    if (moves[i].to == topos64(0x73) && moves[i].promotion == ChessPieceBishop)
+      found_moves[idx++] = true;
+    if (moves[i].to == topos64(0x73) && moves[i].promotion == ChessPieceQueen)
+      found_moves[idx++] = true;
+  }
+
+  for (int i = 0; i < expected_nmoves; i++)
+    fail_if(!found_moves[i], "!found_moves[%d]", i);
+}
+
 START_TEST(test_node_copy)
 {
   Node* root = node_new(NULL, move_new(-1,-1), false);
@@ -738,8 +782,10 @@ int main(int argc, char** argv)
   tcase_add_test(tc1_1, test_bishop_check_king);
   tcase_add_test(tc1_1, test_castle_check_king);
   tcase_add_test(tc1_1, test_pawn_check_king);
+  tcase_add_test(tc1_1, test_promotion);
   tcase_add_test(tc1_1, test_node_copy);
   tcase_add_test(tc1_1, test_can_force_mate);
+
   suite_add_tcase(s1, tc1_1);
 
   srunner_run_all(sr, CK_ENV);

@@ -123,7 +123,9 @@ Node* node_copy(Node original)
 
 Move node_get_best_move(Node node)
 {
-  return node.children[node.best_child]->move;
+  if (node.children && node.best_child >= 0)
+    return node.children[node.best_child]->move;
+  return move_new(-1, -1);
 }
 
 // Free returned pointer by calling tree_free. Note: this will recursively free

@@ -13,6 +13,7 @@ Move move_new(int from, int to)
   Move move = {
       .from = from,
       .to = to,
+      .promotion = ChessPieceNone,
   };
   return move;
 }
