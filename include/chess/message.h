@@ -6,3 +6,4 @@
 
 ipcError message_receive(Message* mess, Socket* sock);
 ipcError message_send(Message mess, Socket* sock);
+char* messagetype_tostring(MessageType type);

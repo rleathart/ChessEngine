@@ -3,12 +3,13 @@
 
 #include <chess/defs.h>
 #include <chess/evaluate.h>
+#include <chess/logging.h>
 #include <chess/matrix.h>
 #include <chess/message.h>
 #include <chess/move.h>
 #include <chess/search.h>
-#include <chess/util.h>
 #include <chess/tree.h>
+#include <chess/util.h>
 
 #include <assert.h>
 #include <ipc/socket.h>
@@ -29,6 +30,12 @@
 
 char* sockname = "ChessIPC";
 int depth = 5;
+
+#ifdef DEBUG
+_Thread_local DebugLevel t_debug_level = DebugLevelDebug;
+#else
+_Thread_local DebugLevel t_debug_level = DebugLevelInfo;
+#endif
 
 int main(int argc, char* argv[])
 {
@@ -77,16 +84,12 @@ int main(int argc, char* argv[])
     {
       if (!socket_is_connected(&sock))
       {
-        fprintf(stderr, "Error: Socket lost connection\n");
+        DLOG("Error: Socket lost connection\n");
         break;
       }
 
       Message mess_in, mess_out;
       message_receive(&mess_in, &sock);
-
-#ifdef DEBUG
-      fprintf(stderr, "Message in type: %d\n", mess_in.type);
-#endif
 
       Move move;
       Move* moves;
@@ -94,94 +97,79 @@ int main(int argc, char* argv[])
       Board board_cpy = board;
       switch (mess_in.type)
       {
-        case MessageTypeLegalMoveRequest:
-          mess_out.type = MessageTypeLegalMoveReply;
-          mess_out.len = sizeof(int);
-          mess_out.data = malloc(sizeof(int));
-          int response = 0;
-          move = *(Move*)mess_in.data;
-          board_get_moves(board, move.from, &moves, &nmoves, ConsiderChecks);
-          for (int i = 0; i < nmoves; i++)
-            if (moves[i].from == move.from && moves[i].to == move.to)
-              response = 1;
+      case MessageTypeLegalMoveRequest:
+        mess_out.type = MessageTypeLegalMoveReply;
+        mess_out.len = sizeof(int);
+        mess_out.data = malloc(sizeof(int));
+        int response = 0;
+        move = *(Move*)mess_in.data;
+        board_get_moves(board, move.from, &moves, &nmoves, ConsiderChecks);
+        for (int i = 0; i < nmoves; i++)
+          if (moves[i].from == move.from && moves[i].to == move.to)
+            response = 1;
 
-          memcpy(mess_out.data, &response, sizeof(int));
-          break;
+        memcpy(mess_out.data, &response, sizeof(int));
+        break;
 
-        case MessageTypeMakeMoveRequest:
-          mess_out.type = MessageTypeMakeMoveReply;
-          mess_out.len = 64 * sizeof(ChessPiece);
-          mess_out.data = malloc(mess_out.len);
-          move = *(Move*)mess_in.data;
-          printf("Client move: %s\n", move_tostring(move));
-          board_update(&board, &move);
-          memcpy(mess_out.data, board.state, mess_out.len);
-          break;
+      case MessageTypeMakeMoveRequest:
+        mess_out.type = MessageTypeMakeMoveReply;
+        mess_out.len = 64 * sizeof(ChessPiece);
+        mess_out.data = malloc(mess_out.len);
+        move = *(Move*)mess_in.data;
+        printf("Client move: %s\n", move_tostring(move));
+        board_update(&board, &move);
+        DLOG("Board Updated:\n%s\n", board_tostring(board));
+        memcpy(mess_out.data, board.state, mess_out.len);
+        break;
 
-        case MessageTypeBestMoveRequest:
-          mess_out.type = MessageTypeBestMoveReply;
-          mess_out.len = sizeof(Move);
-          mess_out.data = malloc(mess_out.len);
-          Node* root = node_new(NULL, move_new(-1, -1), false);
-          minimax(board, depth, -INT_MAX, INT_MAX, false, root);
-          move = node_get_best_move(*root);
-          board_update(&board, &move);
-          printf("Server move: %s\n", move_tostring(move));
-          printf("%s\n", board_tostring(board));
-          memcpy(mess_out.data, &move, mess_out.len);
-          break;
+      case MessageTypeBestMoveRequest:
+        mess_out.type = MessageTypeBestMoveReply;
+        mess_out.len = sizeof(Move);
+        mess_out.data = malloc(mess_out.len);
+        Node* root = node_new(NULL, move_new(-1, -1), false);
+        minimax(board, depth, -INT_MAX, INT_MAX, false, root);
+        move = node_get_best_move(*root);
+        board_update(&board, &move);
+        printf("Server move: %s\n", move_tostring(move));
+        printf("%s\n", board_tostring(board));
+        memcpy(mess_out.data, &move, mess_out.len);
+        break;
 
-        case MessageTypeBoardStateRequest:
-          mess_out.type = MessageTypeBoardStateReply;
-          mess_out.len = sizeof(board.state);
-          mess_out.data = malloc(mess_out.len);
-          memcpy(mess_out.data, board.state, mess_out.len);
-          break;
+      case MessageTypeBoardStateRequest:
+        mess_out.type = MessageTypeBoardStateReply;
+        mess_out.len = sizeof(board.state);
+        mess_out.data = malloc(mess_out.len);
+        memcpy(mess_out.data, board.state, mess_out.len);
+        break;
 
-        case MessageTypeGetMovesRequest:
-          mess_out.type = MessageTypeGetMovesReply;
-          int pos = *(int*)mess_in.data;
-          board_get_moves(board, pos, &moves, &nmoves, ConsiderChecks);
-          mess_out.len = nmoves * sizeof(Move);
-          mess_out.data = malloc(mess_out.len);
-          memcpy(mess_out.data, moves, mess_out.len);
-          break;
+      case MessageTypeGetMovesRequest:
+        mess_out.type = MessageTypeGetMovesReply;
+        int pos = *(int*)mess_in.data;
+        board_get_moves(board, pos, &moves, &nmoves, ConsiderChecks);
+        mess_out.len = nmoves * sizeof(Move);
+        mess_out.data = malloc(mess_out.len);
+        memcpy(mess_out.data, moves, mess_out.len);
+        break;
 
-        // Sets the board from a FEN string
-        case MessageTypeSetBoardRequest:
-          mess_out.type = MessageTypeSetBoardReply;
-          char* fen = (char*)mess_in.data;
-          board_new(&board, fen);
-          mess_out.len = 1;
-          mess_out.data = malloc(mess_out.len);
-          printf("%s\n", board_tostring(board));
-          break;
+      // Sets the board from a FEN string
+      case MessageTypeSetBoardRequest:
+        mess_out.type = MessageTypeSetBoardReply;
+        char* fen = (char*)mess_in.data;
+        board_new(&board, fen);
+        mess_out.len = 1;
+        mess_out.data = malloc(mess_out.len);
+        printf("%s\n", board_tostring(board));
+        break;
 
-        default:
-          break;
+      default:
+        break;
       }
 
-#ifdef DEBUG
-      fprintf(stderr, "Message out type %d...", mess_out.type);
-#endif
       message_send(mess_out, &sock);
-#ifdef DEBUG
-      fprintf(stderr, " sent\n");
-#endif
-      free(mess_out.data);
+      /* free(mess_out.data); */
+      /* free(mess_in.data); */
     }
 
-      /* logger_fd = fopen(logger_filepath, "a"); */
-      /* Move* line = board_calculate_line(board, depth, isWhitesTurn); */
-      /* fprintf(logger_fd, "Line:\n"); */
-      /* Board test_board = board; */
-      /* fprintf(logger_fd, "%s\n\n", board_tostring(test_board)); */
-      /* for (int i = 0; i < depth; i++) */
-      /* { */
-      /*   board_update(&test_board, &line[i]); */
-      /*   fprintf(logger_fd, "%s\n\n", board_tostring(test_board)); */
-      /* } */
-      /* fclose(logger_fd); */
   }
 
   fclose(logger_fd);
