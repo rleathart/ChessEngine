@@ -1,7 +1,11 @@
 #include "chess/defs.h"
-#include <check.h>
+#include "chess/search.h"
+#include "chess/tree.h"
 #include <chess/board.h>
+#include <chess/move.h>
 #include <chess/util.h>
+
+#include <check.h>
 #include <stdlib.h>
 
 START_TEST(test_pawn_moves)
@@ -689,6 +693,67 @@ START_TEST(test_promotion)
   for (int i = 0; i < expected_nmoves; i++)
     fail_if(!found_moves[i], "!found_moves[%d]", i);
 }
+
+START_TEST(test_node_copy)
+{
+  Node* root = node_new(NULL, move_new(-1,-1), false);
+  for (int i = 0; i < 20; i++)
+  {
+    Node* node = node_new(root, move_new(rand() % 8, rand() % 8), true);
+    node->value = rand();
+    for (int leaf = 0; leaf < 10; leaf++)
+    {
+      Node* node_leaf = node_new(node, move_new(rand() % 8, rand() % 8), true);
+      node->value = rand();
+    }
+  }
+
+  Node* copy = node_copy(*root);
+  size_t orig_length;
+  size_t copy_length;
+  Node** nodes_orig = tree_traverse(root, tree_get_all_condition, &orig_length);
+  Node** nodes_copy = tree_traverse(copy, tree_get_all_condition, &copy_length);
+
+  fail_if(orig_length != copy_length);
+  for (int i = 0; i < orig_length; i++)
+  {
+    fail_if(nodes_orig[i]->value != nodes_copy[i]->value);
+    fail_if(nodes_orig[i]->nchilds != nodes_copy[i]->nchilds);
+    fail_if(!move_equals(nodes_orig[i]->move, nodes_copy[i]->move));
+  }
+}
+END_TEST
+
+START_TEST(test_can_force_mate)
+{
+  Move* moves;
+  size_t nmoves;
+  Board board;
+  board_new(&board, "8/8/8/8/7k/8/6qr/K7 w KQkq - 0 1");
+
+  Node* node = node_new(NULL, move_new(57,56), false);
+  Tree* tree = tree_new(node, board, 3);
+  Move move = search(tree);
+  board_update(&board, &move);
+
+  board_get_moves(board, 57, &moves, &nmoves, ConsiderChecks | GetMovesWhite);
+  if (nmoves == 0 && is_in_check(board, true))
+    return;
+
+  move = move_new(56,57);
+  board_update(&board, &move);
+
+  tree_free(&tree);
+  node = node_new(NULL, move_new(56,57), false);
+  tree = tree_new(node, board, 3);
+  move = search(tree);
+  board_update(&board, &move);
+
+  board_get_moves(board, 57, &moves, &nmoves, ConsiderChecks | GetMovesWhite);
+  fail_unless(nmoves == 0 && is_in_check(board, true));
+  tree_free(&tree);
+  free(moves);
+}
 END_TEST
 
 int main(int argc, char** argv)
@@ -718,6 +783,9 @@ int main(int argc, char** argv)
   tcase_add_test(tc1_1, test_castle_check_king);
   tcase_add_test(tc1_1, test_pawn_check_king);
   tcase_add_test(tc1_1, test_promotion);
+  tcase_add_test(tc1_1, test_node_copy);
+  tcase_add_test(tc1_1, test_can_force_mate);
+
   suite_add_tcase(s1, tc1_1);
 
   srunner_run_all(sr, CK_ENV);

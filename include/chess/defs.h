@@ -124,4 +124,5 @@ struct Tree
 {
   Node* root;
   Board board;
+  size_t depth;
 };

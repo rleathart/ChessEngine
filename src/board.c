@@ -325,6 +325,7 @@ bool is_in_check(Board board, bool isWhite)
 }
 
 // @@Document Explain why we take Move**
+// Free moves when finished using it
 void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves,
                      int flags)
 {
