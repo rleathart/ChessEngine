@@ -2,4 +2,4 @@
 
 #include <chess/defs.h>
 
-extern _Thread_local DebugLevel g_debug_level;
+extern _Thread_local DebugLevel t_debug_level;
