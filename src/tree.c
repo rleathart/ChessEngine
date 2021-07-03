@@ -126,6 +126,8 @@ Move node_get_best_move(Node node)
   return node.children[node.best_child]->move;
 }
 
+// Free returned pointer by calling tree_free. Note: this will recursively free
+// all children of root.
 int tree_free(Tree** tree)
 {
   int nodes_freed = node_free(&((*tree)->root));
@@ -134,6 +136,8 @@ int tree_free(Tree** tree)
   return nodes_freed;
 }
 
+// Free returned pointer by calling node_free. Note: calling this function
+// on an ancestor or related tree will also free this node.
 int node_free(Node** node)
 {
   int children_to_free = (*node)->nchilds;

@@ -77,6 +77,7 @@ int main(int argc, char* argv[])
       sleep_ms(200);
 
     board_new(&board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    Move player_move;
 
     for (;;)
     {
@@ -114,6 +115,7 @@ int main(int argc, char* argv[])
         mess_out.len = 64 * sizeof(ChessPiece);
         mess_out.data = malloc(mess_out.len);
         move = *(Move*)mess_in.data;
+        player_move = move;
         printf("Client move: %s\n", move_tostring(move));
         board_update(&board, &move);
         DLOG("Board Updated:\n%s\n", board_tostring(board));
@@ -124,9 +126,10 @@ int main(int argc, char* argv[])
         mess_out.type = MessageTypeBestMoveReply;
         mess_out.len = sizeof(Move);
         mess_out.data = malloc(mess_out.len);
-        Node* root = node_new(NULL, move_new(-1, -1), false);
-        minimax(board, depth, -INT_MAX, INT_MAX, false, root);
-        move = node_get_best_move(*root);
+        Node* server_root = node_new(NULL, move, false);
+        Tree* server_tree = tree_new(server_root, board, depth);
+        move = search(server_tree);
+        free(server_tree);
         board_update(&board, &move);
         printf("Server move: %s\n", move_tostring(move));
         printf("%s\n", board_tostring(board));

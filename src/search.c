@@ -1,5 +1,6 @@
 #include <chess/search.h>
 #include <chess/board.h>
+#include <chess/move.h>
 #include <chess/evaluate.h>
 #include <chess/tree.h>
 
@@ -70,12 +71,47 @@ int minimax(Board board, size_t depth, s64 alpha, s64 beta,
   return best_eval;
 }
 
+// @@Rework merging precomputation may cause this to break. Consider taking a
+// struct as an argument to handle that. or _Thread_local :D
 Move search(Tree* tree)
 {
+  static Node* checkmate_lines = NULL;
+  static Node* current_node = NULL;
+  static bool can_force_mate = false;
   Move best_move;
-  int value = minimax(tree->board, tree->depth, -INT_MAX, INT_MAX,
-      tree->root->isWhite, tree->root);
-  best_move = node_get_best_move(*tree->root);
+
+  if (!can_force_mate)
+  {
+    int value = minimax(tree->board, tree->depth, -INT_MAX, INT_MAX,
+        tree->root->isWhite, tree->root);
+    best_move = node_get_best_move(*tree->root);
+    if (value == -INT_MAX)
+    {
+      can_force_mate = true;
+      // deep copy tree with root at the chosen move
+      Node* best_child = tree->root->children[tree->root->best_child];
+      checkmate_lines = node_copy(*best_child);
+      current_node = checkmate_lines;
+    }
+  }
+  else
+  {
+    for (int i = 0; i < current_node->nchilds; i++)
+    {
+      if (move_equals(tree->root->move,
+          current_node->children[i]->move))
+        current_node = current_node->children[i];
+    }
+    current_node =
+      current_node->children[current_node->best_child];
+    best_move = current_node->move;
+    if (current_node->nchilds <=0)
+    {
+      current_node = NULL;
+      can_force_mate = false;
+      node_free(&checkmate_lines);
+    }
+  }
 
   return best_move;
 }
