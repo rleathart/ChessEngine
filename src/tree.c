@@ -97,7 +97,9 @@ Node* node_new(Node* parent, Move move, bool isWhite)
 
 Move node_get_best_move(Node node)
 {
-  return node.children[node.best_child]->move;
+  if (node.children && node.best_child >= 0)
+    return node.children[node.best_child]->move;
+  return move_new(-1, -1);
 }
 
 int tree_free(Tree** tree)
