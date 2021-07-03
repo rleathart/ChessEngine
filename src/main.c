@@ -112,7 +112,8 @@ int main(int argc, char* argv[])
           mess_out.type = MessageTypeMakeMoveReply;
           mess_out.len = 64 * sizeof(ChessPiece);
           mess_out.data = malloc(mess_out.len);
-          move = *(Move*)mess_in.data;
+          Move tmp = *(Move*)mess_in.data;
+          move = move_new(tmp.from, tmp.to);
           printf("Client move: %s\n", move_tostring(move));
           board_update(&board, &move);
           memcpy(mess_out.data, board.state, mess_out.len);
@@ -129,6 +130,7 @@ int main(int argc, char* argv[])
           printf("Server move: %s\n", move_tostring(move));
           printf("%s\n", board_tostring(board));
           memcpy(mess_out.data, &move, mess_out.len);
+          node_free(&root);
           break;
 
         case MessageTypeBoardStateRequest:
@@ -152,6 +154,22 @@ int main(int argc, char* argv[])
           mess_out.type = MessageTypeSetBoardReply;
           char* fen = (char*)mess_in.data;
           board_new(&board, fen);
+          mess_out.len = 1;
+          mess_out.data = malloc(mess_out.len);
+          printf("%s\n", board_tostring(board));
+          break;
+
+        // @@FIXME This will mess up precomputation since promoting after move.
+        case MessageTypePromotionRequest:
+          mess_out.type = MessageTypePromotionReply;
+          ChessPiece piece = *(ChessPiece*)mess_in.data;
+          printf("Piece: %d\n", piece);
+          for (int i = 0; i < 8; i++)
+            if (board.state[i] & ChessPiecePawn)
+              board.state[i] = piece | (board.state[i] & ChessPieceIsWhite);
+          for (int i = topos64(0x70); i < 64; i++)
+            if (board.state[i] & ChessPiecePawn)
+              board.state[i] = piece | (board.state[i] & ChessPieceIsWhite);
           mess_out.len = 1;
           mess_out.data = malloc(mess_out.len);
           printf("%s\n", board_tostring(board));

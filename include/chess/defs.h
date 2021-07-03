@@ -1,5 +1,6 @@
 #pragma once
 
+#include <limits.h> // For INT_MAX
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -35,6 +36,8 @@ typedef enum
   MessageTypeGetMovesReply,
   MessageTypeSetBoardRequest,
   MessageTypeSetBoardReply,
+  MessageTypePromotionRequest,
+  MessageTypePromotionReply,
   // We need to use this to pad out the enum to make sure it's always
   // sizeof(int)
   __MessageTypeSizeMarker = 1 << (sizeof(int) - 1),
@@ -63,6 +66,8 @@ typedef struct
 {
   u8 from;
   u8 to;
+
+  ChessPiece promotion;
 } Move;
 
 typedef struct
