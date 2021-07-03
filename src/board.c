@@ -42,10 +42,11 @@ static void parse_fen(Board* board, char* fen)
       continue;
     }
 
+    char cstr[] = {c, '\0'};
+
     switch (stage)
     {
     case 0: // Board layout
-      char cstr[] = {c, '\0'};
       if (atoi(cstr))
         for (int i = 0; i < atoi(cstr); i++)
           board->state[idx++] = ChessPieceNone;
