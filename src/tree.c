@@ -28,6 +28,8 @@ bool tree_get_leaves_condition(Node node)
     return false;
   return true;
 }
+bool tree_get_all_condition(Node node)
+{ return true; }
 
 // free the returned pointer
 Node** tree_traverse(Node* root, bool (*condition)(Node), size_t* length)
@@ -65,11 +67,12 @@ size_t node_find_depth(Node* node)
   return depth;
 }
 
-Tree* tree_new(Node* node, Board board)
+Tree* tree_new(Node* node, Board board, size_t depth)
 {
   Tree* tree = malloc(sizeof(Tree));
   tree->root = node;
   tree->board = board;
+  tree->depth = depth;
   return tree;
 }
 
@@ -93,6 +96,29 @@ Node* node_new(Node* parent, Move move, bool isWhite)
       parent->best_child = 0;
   }
   return node;
+}
+
+//deep copies a node and its children, returning the root
+Node* node_copy_private(Node* parent, Node original)
+{
+  Node* copy = malloc(sizeof(Node));
+  copy->children = malloc(original.nchilds * sizeof(Node*));
+  copy->parent = parent;
+  copy->nchilds = original.nchilds;
+  copy->best_child = original.best_child;
+  copy->move = original.move;
+  copy->isWhite = original.isWhite;
+  copy->value = original.value;
+  for (int i = 0; i < copy->nchilds; i++)
+  {
+    copy->children[i] = node_copy_private(copy, *original.children[i]);
+  }
+  return copy;
+}
+//wrapper for node_copy_private
+Node* node_copy(Node original)
+{
+  return node_copy_private(NULL, original);
 }
 
 Move node_get_best_move(Node node)

@@ -28,7 +28,7 @@
  */
 
 char* sockname = "ChessIPC";
-int depth = 5;
+int depth = 4;
 
 int main(int argc, char* argv[])
 {
@@ -51,14 +51,12 @@ int main(int argc, char* argv[])
   bool isWhitesTurn = true;
 
   Node* root = node_new(NULL, move_new(-1, -1), isWhitesTurn);
-  Tree* tree = tree_new(root, board);
+  Tree* tree = tree_new(root, board, depth);
 
   clock_t start_time = clock();
-  printf("minimax: %d\n",
-         minimax(board, depth, -INT_MAX, INT_MAX, true, root));
+  Move best_move = search(tree);
   clock_t end_time = clock();
   double total_time = (double)(end_time - start_time) / CLOCKS_PER_SEC;
-  Move best_move = node_get_best_move(*root);
   printf("Best move: %s\n\n", move_tostring(best_move));
   printf("Time taken: %f\n\n", total_time);
 
@@ -122,9 +120,9 @@ int main(int argc, char* argv[])
           mess_out.type = MessageTypeBestMoveReply;
           mess_out.len = sizeof(Move);
           mess_out.data = malloc(mess_out.len);
-          Node* root = node_new(NULL, move_new(-1, -1), false);
-          minimax(board, depth, -INT_MAX, INT_MAX, false, root);
-          move = node_get_best_move(*root);
+          Node* server_root = node_new(NULL, move_new(-1, -1), false);
+          Tree* server_tree = tree_new(server_root, board, depth);
+          move = search(server_tree);
           board_update(&board, &move);
           printf("Server move: %s\n", move_tostring(move));
           printf("%s\n", board_tostring(board));

@@ -25,6 +25,13 @@ char* move_tostring(Move move)
   return str;
 }
 
+bool move_equals(Move move, Move other)
+{
+  if (move.from == other.from && move.to == other.to)
+    return true;
+  return false;
+}
+
 Move move_get_random(Board board, int flags)
 {
   Move rv;
