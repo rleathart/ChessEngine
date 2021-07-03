@@ -6,6 +6,14 @@
 #include <stdlib.h>
 #include <time.h>
 
+/* ANSI escape codes for colouring the terminal */
+#define LOC_COL "\033[38;2;7;102;114m"
+#define ERR_COL "\033[38;2;220;50;47m"
+#define WAR_COL "\033[38;2;181;157;0m"
+#define INF_COL "\033[38;2;53;193;90m"
+#define DBG_COL "\033[38;2;88;109;210m"
+#define ESC     "\033[0m"
+
 #ifdef DEBUG
 _Thread_local DebugLevel t_debug_level = DebugLevelDebug;
 #else
@@ -17,16 +25,44 @@ static char* debuglevel_tostring(DebugLevel level)
   switch (level)
   {
     case DebugLevelError:
-      return "ERROR";
+      return ERR_COL "ERROR" ESC;
     case DebugLevelWarning:
-      return "WARN ";
+      return WAR_COL "WARN " ESC;
     case DebugLevelInfo:
-      return "INFO ";
+      return INF_COL "INFO " ESC;
     case DebugLevelDebug:
-      return "DEBUG";
+      return DBG_COL "DEBUG" ESC;
     default:
       return "";
   }
+}
+static char* col(DebugLevel level)
+{
+  switch (level)
+  {
+    case DebugLevelError:
+      return ERR_COL;
+    case DebugLevelWarning:
+      return WAR_COL;
+    case DebugLevelInfo:
+      return INF_COL;
+    case DebugLevelDebug:
+      return DBG_COL;
+    default:
+      return "";
+  }
+}
+static char* conditional_escape(DebugLevel level)
+{
+  switch (level)
+  {
+    case DebugLevelError:
+    case DebugLevelWarning:
+      return "";
+    default:
+      return ESC;
+  }
+
 }
 void chess_logger(DebugLevel level, char* file,
                   int line, const char* func, const char* fmt, ...)
@@ -54,10 +90,16 @@ void chess_logger(DebugLevel level, char* file,
     else
     {
       if (file) // If file is NULL, don't print the header
+      {
+        char buffer[128];
+        sprintf(buffer, LOC_COL "%s:%03d:%s()%s: %s",
+                file, line, func, col(level), conditional_escape(level));
         fprintf(streams[i],
-                "%s: [%s] %s:%03d:%s(): ", debuglevel_tostring(level), time_str,
-                file, line, func);
+                "%s: [%s] %s",
+                debuglevel_tostring(level), time_str, buffer);
+      }
       vfprintf(streams[i], fmt, args);
+      fprintf(streams[i], ESC);
       if (!(streams[i] == stderr || streams[i] == stdout))
         fclose(streams[i]);
     }
@@ -65,3 +107,10 @@ void chess_logger(DebugLevel level, char* file,
   free(time_str);
   va_end(args);
 }
+
+#undef LOC_COL
+#undef ERR_COL
+#undef WAR_COL
+#undef INF_COL
+#undef DBG_COL
+#undef ESC

@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
 {
   char* logger_filepath = "chess.log";
   FILE* logger_fd = fopen(logger_filepath, "a");
-  fprintf(logger_fd, "\n********************\n");
+  fprintf(logger_fd, "\n********************\n\n");
   fclose(logger_fd);
 
   // @@Rework Maybe find some way to not need to call this procedure
@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
   Board board;
   board_new(&board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
-  printf("%s\n", board_tostring(board));
+  DLOG("\n%s\n", board_tostring(board));
   bool isWhitesTurn = true;
 
   Node* root = node_new(NULL, move_new(-1, -1), isWhitesTurn);
@@ -64,10 +64,8 @@ int main(int argc, char* argv[])
   Move best_move = search(tree);
   clock_t end_time = clock();
   double total_time = (double)(end_time - start_time) / CLOCKS_PER_SEC;
-  printf("Best move: %s\n\n", move_tostring(best_move));
-  printf("Time taken: %f\n\n", total_time);
-
-  tree_print_best_line(*tree);
+  DLOG("Best move: %s\n", move_tostring(best_move));
+  DLOG("Time taken: %f\n\n", total_time);
 
   int nodes_freed = tree_free(&tree);
 
