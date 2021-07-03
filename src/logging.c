@@ -18,6 +18,17 @@ _Thread_local DebugLevel t_debug_level = DebugLevelDebug;
 #else
 _Thread_local DebugLevel t_debug_level = DebugLevelInfo;
 #endif
+static DebugLevel prev_debug_level;
+
+void tdebug_level_set(DebugLevel level)
+{
+  prev_debug_level = t_debug_level;
+  t_debug_level = level;
+}
+DebugLevel tdebug_level_get()
+{ return t_debug_level; }
+void tdebug_level_set_prev()
+{ t_debug_level = prev_debug_level; }
 
 static char* debuglevel_tostring(DebugLevel level)
 {

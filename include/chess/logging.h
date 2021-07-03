@@ -16,3 +16,6 @@ extern _Thread_local DebugLevel t_debug_level;
 #define DPRINT(fmt, ...) chess_logger(DebugLevelDebug, NULL, __LINE__, __FUNCTION__, fmt, ##__VA_ARGS__)
 
 void chess_logger(DebugLevel level, char* file, int line, const char* func, const char* fmt, ...);
+void tdebug_level_set(DebugLevel level);
+DebugLevel tdebug_level_get();
+void tdebug_level_set_prev();

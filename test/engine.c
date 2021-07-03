@@ -4,6 +4,7 @@
 #include <chess/board.h>
 #include <chess/move.h>
 #include <chess/util.h>
+#include <chess/logging.h>
 
 #include <check.h>
 #include <stdlib.h>
@@ -758,6 +759,8 @@ END_TEST
 
 int main(int argc, char** argv)
 {
+  tdebug_level_set(DebugLevelError);
+
   Suite* s1 = suite_create("Engine");
   TCase* tc1_1 = tcase_create("Engine");
   SRunner* sr = srunner_create(s1);

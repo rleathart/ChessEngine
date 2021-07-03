@@ -31,12 +31,6 @@
 char* sockname = "ChessIPC";
 int depth = 4;
 
-#ifdef DEBUG
-_Thread_local DebugLevel t_debug_level = DebugLevelDebug;
-#else
-_Thread_local DebugLevel t_debug_level = DebugLevelInfo;
-#endif
-
 int main(int argc, char* argv[])
 {
   char* logger_filepath = "chess.log";
