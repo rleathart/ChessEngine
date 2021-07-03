@@ -69,3 +69,13 @@ int minimax(Board board, size_t depth, s64 alpha, s64 beta,
 
   return best_eval;
 }
+
+Move search(Tree* tree)
+{
+  Move best_move;
+  int value = minimax(tree->board, tree->depth, -INT_MAX, INT_MAX,
+      tree->root->isWhite, tree->root);
+  best_move = node_get_best_move(*tree->root);
+
+  return best_move;
+}
