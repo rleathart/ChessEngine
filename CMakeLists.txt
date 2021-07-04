@@ -19,6 +19,8 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS YES CACHE BOOL "Export all symbols")
 
 if(NOT CMAKE_PREFIX_PATH)
   set(CMAKE_PREFIX_PATH $ENV{CMAKE_PREFIX_PATH})
+  # Convert from Unix path sep
+  string(REPLACE ":" ";" CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH}")
 endif()
 
 foreach(path ${CMAKE_PREFIX_PATH})
