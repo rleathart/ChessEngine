@@ -17,12 +17,25 @@ endif()
 
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS YES CACHE BOOL "Export all symbols")
 
+if(NOT CMAKE_PREFIX_PATH)
+  set(CMAKE_PREFIX_PATH $ENV{CMAKE_PREFIX_PATH})
+endif()
+
+foreach(path ${CMAKE_PREFIX_PATH})
+  include_directories(${path}/include)
+  link_directories(${path}/lib)
+endforeach(path)
+
 project(chess C)
 
 include(CTest)
 find_package(ipc REQUIRED)
 
 include_directories(include)
+
+if(WIN32)
+  find_library(PTHREADS_LIBRARY pthreadVC2)
+endif()
 
 set(SRC
   src/matrix.c
@@ -37,8 +50,13 @@ set(SRC
   src/logging.c
   )
 
+set(CHESS_LIBS ipc)
+if(WIN32)
+  list(APPEND CHESS_LIBS ${PTHREADS_LIBRARY})
+endif()
+
 add_library(${PROJECT_NAME} ${SRC})
-target_link_libraries(${PROJECT_NAME} ipc)
+target_link_libraries(${PROJECT_NAME} ${CHESS_LIBS})
 
 target_include_directories(${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -55,7 +73,7 @@ install(EXPORT ${PROJECT_NAME}Config DESTINATION lib/cmake/${PROJECT_NAME})
 export(TARGETS ${PROJECT_NAME} FILE ${PROJECT_NAME}Config.cmake)
 
 add_executable(main src/main.c)
-target_link_libraries(main ${PROJECT_NAME} ipc)
+target_link_libraries(main ${PROJECT_NAME} ${CHESS_LIBS})
 
 if (CHESS_BUILD_TESTS)
   find_package(PkgConfig REQUIRED)
@@ -64,6 +82,10 @@ if (CHESS_BUILD_TESTS)
   link_directories(${CHECK_LIBRARY_DIRS})
 
   add_executable(test_engine test/engine.c)
-  target_link_libraries(test_engine ${CHECK_LIBRARIES} ${PROJECT_NAME} ipc)
+  target_link_libraries(test_engine
+    ${CHECK_LIBRARIES}
+    ${PROJECT_NAME}
+    ${CHESS_LIBS}
+    )
   add_test(NAME engine COMMAND test_engine)
 endif()
