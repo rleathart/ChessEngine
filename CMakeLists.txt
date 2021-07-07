@@ -35,10 +35,6 @@ find_package(ipc REQUIRED)
 
 include_directories(include)
 
-if(WIN32)
-  find_library(PTHREADS_LIBRARY pthreadVC2)
-endif()
-
 set(SRC
   src/matrix.c
   src/util.c
@@ -54,7 +50,8 @@ set(SRC
 
 set(CHESS_LIBS ipc)
 if(WIN32)
-  list(APPEND CHESS_LIBS ${PTHREADS_LIBRARY})
+  find_package(pthread REQUIRED)
+  list(APPEND CHESS_LIBS pthread)
 endif()
 
 add_library(${PROJECT_NAME} ${SRC})
