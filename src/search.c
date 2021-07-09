@@ -22,8 +22,6 @@ int minimax(Board board, size_t depth, s64 alpha, s64 beta,
   board_get_moves_all(board, &moves, &nmoves,
                       maximising_player ? GetMovesWhite : GetMovesBlack);
 
-  // @@Implement Right now, unlikely for AI to deliver checkmate since it
-  // doesn't pick the line that checkmates in the fewest moves.
   if (nmoves == 0) // Either checkmate or stalemate
   {
     if (!is_in_check(board, maximising_player)) // Stalemate
