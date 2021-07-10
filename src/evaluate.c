@@ -77,6 +77,7 @@ int table_black_castle[64];
 int table_black_queen[64];
 int table_black_king[64];
 
+__attribute__((constructor))
 void table_black_init()
 {
   for (int i = 0; i < 64; i++)

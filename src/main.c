@@ -38,9 +38,6 @@ int main(int argc, char* argv[])
   fprintf(logger_fd, "\n********************\n\n");
   fclose(logger_fd);
 
-  // @@Rework Maybe find some way to not need to call this procedure
-  table_black_init();
-
   ipcError err = 0;
   Socket sock;
   socket_init(&sock, get_dotnet_pipe_name("ChessIPC_Messages"), SocketServer);
