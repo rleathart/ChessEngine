@@ -36,11 +36,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 project(chess C)
 
 add_subdirectory(extern/librgl)
-
-include(CTest)
-find_package(ipc REQUIRED)
-
-include_directories(include)
+add_subdirectory(extern/libipc)
 
 set(SRC
   src/matrix.c
@@ -82,6 +78,7 @@ add_executable(main src/main.c)
 target_link_libraries(main ${PROJECT_NAME} ${CHESS_LIBS})
 
 if (CHESS_BUILD_TESTS)
+  include(CTest)
   find_package(PkgConfig REQUIRED)
   pkg_check_modules(CHECK REQUIRED check)
   include_directories(include ${CHECK_INCLUDE_DIRS})

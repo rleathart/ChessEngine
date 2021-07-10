@@ -1,3 +1,6 @@
 [submodule "extern/librgl"]
 	path = extern/librgl
 	url = https://github.com/rleathart/librgl
+[submodule "extern/libipc"]
+	path = extern/libipc
+	url = https://github.com/rleathart/libipc
