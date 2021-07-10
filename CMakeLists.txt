@@ -28,7 +28,14 @@ foreach(path ${CMAKE_PREFIX_PATH})
   link_directories(${path}/lib)
 endforeach(path)
 
+# Just dump everything in the build dir so the executables can find dlls
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+
 project(chess C)
+
+add_subdirectory(extern/librgl)
 
 include(CTest)
 find_package(ipc REQUIRED)
@@ -48,7 +55,7 @@ set(SRC
   src/logging.c
   )
 
-set(CHESS_LIBS ipc)
+set(CHESS_LIBS ipc rgl)
 if(WIN32)
   find_package(pthread REQUIRED)
   list(APPEND CHESS_LIBS pthread)

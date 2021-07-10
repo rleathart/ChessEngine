@@ -1,0 +1,3 @@
+[submodule "extern/librgl"]
+	path = extern/librgl
+	url = https://github.com/rleathart/librgl
