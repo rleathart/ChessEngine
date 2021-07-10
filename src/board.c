@@ -498,6 +498,10 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves,
 
   // If making any of these moves would put our king in check then we cant make
   // them
+  // we take considerChecks as an argument to this function because a pinned
+  // piece can still give check: i.e. a piece that is pinned against the king
+  // can still move to kill the enemy king even if doing so leaves its own
+  // king in check.
   if (flags & ConsiderChecks)
   {
     Board board_after = _board;
