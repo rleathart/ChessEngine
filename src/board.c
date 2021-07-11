@@ -460,7 +460,7 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves,
     {
       if (!(castling_ks ? _board.can_castle_ks[isWhite]
                         : _board.can_castle_qs[isWhite]))
-        break;
+        continue;
 
       // There needs to actually be a castle in the corner square
       if (!(board[topos64fr(castling_ks ? 7 : 0, isWhite ? 7 : 0)] &
