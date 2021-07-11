@@ -15,3 +15,5 @@ git clone https://github.com/rleathart/ChessEngine --recursive
 cmake -B build
 cmake --build build
 ```
+
+Note: You may wish to set `git config submodule.recurse true` to make checkouts with submodules easier.
