@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
           .stream = stderr,
       },
       {
-          .filename = "chess.log",
+          .filename = strdup("chess.log"),
       },
   };
   for (int i = 0; i < sizeof(streams) / sizeof(streams[0]); i++)
