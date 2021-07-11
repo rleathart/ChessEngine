@@ -6,9 +6,6 @@
 #include <stdio.h>
 #include <limits.h>
 
-extern FILE* logger_fd;
-extern char* logger_filepath;
-
 extern int depth;
 
 typedef uint8_t u8;
@@ -21,20 +18,6 @@ typedef int32_t s32;
 typedef int64_t s64;
 
 typedef u8 byte;
-
-typedef enum
-{
-  // Ordered by decreasing severity. If we specify DebugLevelWarning, then we
-  // should print errors and warnings but not info.
-  DebugLevelNone,
-
-  DebugLevelError,
-  DebugLevelWarning,
-  DebugLevelInfo,
-  DebugLevelDebug, // Used for throwaway prints
-
-  DebugLevelAll, // Keep this at the end of the enum
-} DebugLevel;
 
 typedef enum
 {

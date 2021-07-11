@@ -1,7 +1,8 @@
+#include <rgl/logging.h>
+
 #include <chess/defs.h>
 #include <chess/message.h>
 #include <chess/util.h>
-#include <chess/logging.h>
 
 enum
 {

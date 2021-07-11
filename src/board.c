@@ -1,8 +1,9 @@
+#include <rgl/logging.h>
+
 #include <chess/board.h>
 #include <chess/search.h>
 #include <chess/tree.h>
 #include <chess/util.h>
-#include <chess/logging.h>
 
 #include <ctype.h>
 #include <stdio.h>

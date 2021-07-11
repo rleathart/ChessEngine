@@ -1,10 +1,11 @@
+#include <rgl/logging.h>
+
 #include "chess/defs.h"
 #include "chess/search.h"
 #include "chess/tree.h"
 #include <chess/board.h>
 #include <chess/move.h>
 #include <chess/util.h>
-#include <chess/logging.h>
 
 #include <check.h>
 #include <stdlib.h>
@@ -759,7 +760,7 @@ END_TEST
 
 int main(int argc, char** argv)
 {
-  tdebug_level_set(DebugLevelError);
+  t_debug_level_set(DebugLevelError);
 
   Suite* s1 = suite_create("Engine");
   TCase* tc1_1 = tcase_create("Engine");

@@ -48,7 +48,6 @@ set(SRC
   src/evaluate.c
   src/search.c
   src/tree.c
-  src/logging.c
   )
 
 set(CHESS_LIBS ipc rgl)

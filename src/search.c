@@ -1,9 +1,10 @@
+#include <rgl/logging.h>
+
 #include <chess/search.h>
 #include <chess/board.h>
 #include <chess/move.h>
 #include <chess/evaluate.h>
 #include <chess/tree.h>
-#include <chess/logging.h>
 
 #include <stdlib.h>
 #include <math.h>
@@ -13,8 +14,8 @@ int minimax(Board board, size_t depth, s64 alpha, s64 beta,
             bool maximising_player, Node* out_node)
 {
   // We don't want to print anything inside minimax
-  DebugLevel old_debug_level = t_debug_level;
-  t_debug_level = DebugLevelNone;
+  DebugLevel old_debug_level = t_debug_level_get();
+  t_debug_level_set(DebugLevelNone);
   int best_eval = maximising_player ? -INT_MAX : INT_MAX;
   Board new_board = board;
   Move* moves;
@@ -22,24 +23,20 @@ int minimax(Board board, size_t depth, s64 alpha, s64 beta,
   board_get_moves_all(board, &moves, &nmoves,
                       maximising_player ? GetMovesWhite : GetMovesBlack);
 
+  int rv = best_eval;
+
   if (nmoves == 0) // Either checkmate or stalemate
   {
     if (!is_in_check(board, maximising_player)) // Stalemate
       best_eval = 0;
 
-    out_node->value = best_eval;
-    free(moves);
-    t_debug_level = old_debug_level;
-    return best_eval;
+    goto end;
   }
 
   if (depth == 0)
   {
     best_eval = evaluate_board(board);
-    out_node->value = best_eval;
-    free(moves);
-    t_debug_level = old_debug_level;
-    return best_eval;
+    goto end;
   }
 
   int best_eval_i = 0;
@@ -67,12 +64,14 @@ int minimax(Board board, size_t depth, s64 alpha, s64 beta,
     if (beta <= alpha) // Prune
       break;
   }
+
+end:
   free(moves);
 
   out_node->value = best_eval;
   out_node->best_child = best_eval_i;
 
-  t_debug_level = old_debug_level;
+  t_debug_level_set(old_debug_level);
   return best_eval;
 }
 

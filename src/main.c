@@ -1,9 +1,10 @@
 #define _CRT_SECURE_NO_DEPRECATE
 #define _USE_MATH_DEFINES
 
+#include <rgl/logging.h>
+
 #include <chess/defs.h>
 #include <chess/evaluate.h>
-#include <chess/logging.h>
 #include <chess/matrix.h>
 #include <chess/message.h>
 #include <chess/move.h>
@@ -33,10 +34,18 @@ int depth = 4;
 
 int main(int argc, char* argv[])
 {
-  char* logger_filepath = "chess.log";
-  FILE* logger_fd = fopen(logger_filepath, "a");
-  fprintf(logger_fd, "\n********************\n\n");
-  fclose(logger_fd);
+
+  // Set up our logger
+  LoggerStream streams[] = {
+      {
+          .stream = stderr,
+      },
+      {
+          .filename = "chess.log",
+      },
+  };
+  for (int i = 0; i < sizeof(streams) / sizeof(streams[0]); i++)
+    rgl_logger_add_stream(streams[i]);
 
   ipcError err = 0;
   Socket sock;
@@ -65,7 +74,8 @@ int main(int argc, char* argv[])
     while (socket_connect(&sock))
       sleep_ms(200);
 
-    board_new(&board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    board_new(&board,
+              "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     Move player_move;
 
     for (;;)
@@ -178,8 +188,6 @@ int main(int argc, char* argv[])
         free(moves);
     }
   }
-
-  fclose(logger_fd);
 
   return 0;
 }
