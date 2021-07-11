@@ -73,16 +73,3 @@ char* get_dotnet_pipe_name(char* name)
   pipename = realloc(pipename, strlen(pipename) + 1);
   return pipename;
 }
-
-void sleep_ms(int ms)
-{
-#ifdef _WIN32
-  Sleep(ms);
-#else
-  struct timespec ts = {
-      .tv_sec = ms / 1000,
-      .tv_nsec = (ms % 1000) * 1e6,
-  };
-  nanosleep(&ts, NULL);
-#endif
-}

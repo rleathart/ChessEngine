@@ -1,4 +1,5 @@
 #include <rgl/logging.h>
+#include <rgl/util.h>
 
 #include <chess/defs.h>
 #include <chess/message.h>
