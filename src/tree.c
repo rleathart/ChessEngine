@@ -31,6 +31,7 @@ bool tree_get_leaves_condition(Node node)
 bool tree_get_all_condition(Node node)
 { return true; }
 
+//@@ FIXME: Might be a small memory leak here.
 // free the returned pointer
 Node** tree_traverse(Node* root, bool (*condition)(Node), size_t* length)
 {
@@ -48,6 +49,7 @@ Node** tree_traverse(Node* root, bool (*condition)(Node), size_t* length)
       for (int i = *length - child_length; i < *length; i++)
         node[i] = child_nodes[i - orig_length];
     }
+    free(child_nodes);
   }
 
   if (condition(*root))

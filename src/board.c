@@ -266,6 +266,7 @@ static int find_king(Board board, bool isWhite)
 static int typed_pos_of_checker(Board board, int king_pos,
                                 ChessPiece attacker_type)
 {
+  int rv = -1;
   Move* moves;
   size_t nmoves;
   bool is_white = board.state[king_pos] & ChessPieceIsWhite;
@@ -282,13 +283,20 @@ static int typed_pos_of_checker(Board board, int king_pos,
     if (board.state[frompos] & (attacker_type))
     {
       if (is_white && (board.state[frompos] & ChessPieceIsWhite) == 0)
-        return frompos;
+      {
+        rv = frompos;
+        goto end;
+      }
       if (!is_white && (board.state[frompos] & ChessPieceIsWhite) != 0)
-        return frompos;
+      {
+        rv = frompos;
+        goto end;
+      }
     }
   }
+end:
   free(moves);
-  return -1;
+  return rv;
 }
 
 /// @return position of piece that is checking the king or -1 if the king is not
@@ -331,7 +339,7 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves,
                      int flags)
 {
   size_t idx = 0;
-  *moves = malloc(64 * sizeof(Move)); // Can be at most 64 moves
+  *moves = malloc(27 * sizeof(Move)); // Can be at most 27 moves
 
   u8 pos_88 = topos88(pos);
 

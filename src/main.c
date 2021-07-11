@@ -80,7 +80,7 @@ int main(int argc, char* argv[])
       message_receive(&mess_in, &sock);
 
       Move move;
-      Move* moves;
+      Move* moves = NULL;
       size_t nmoves = 0;
       Board board_cpy = board;
       switch (mess_in.type)
@@ -118,7 +118,7 @@ int main(int argc, char* argv[])
         Node* server_root = node_new(NULL, player_move, false);
         Tree* server_tree = tree_new(server_root, board, depth);
         move = search(server_tree);
-        free(server_tree);
+        tree_free(&server_tree);
         board_update(&board, &move);
         ILOG("Server move: %s\n", move_tostring(move));
         ILOG("Board Updated:\n%s\n", board_tostring(board));
@@ -174,6 +174,8 @@ int main(int argc, char* argv[])
       message_send(mess_out, &sock);
       free(mess_out.data);
       free(mess_in.data);
+      if (moves)
+        free(moves);
     }
   }
 
