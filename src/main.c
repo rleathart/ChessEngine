@@ -34,11 +34,14 @@
 char* sockname = "ChessIPC";
 int depth = 5;
 
-void signal_handler(int signal)
+void signal_handler(int sig)
 {
-  switch (signal)
+  switch (sig)
   {
     case SIGSEGV:
+      // Need to reset signal handler so we don't get stuck in a loop
+      signal(SIGSEGV, SIG_DFL);
+      // Calling printf in signal handler not allowed but we're crashing anyway
       ELOG("Segfault!\n");
       break;
   }
