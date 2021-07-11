@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <signal.h>
 
 /*
  * ###########################################################################
@@ -31,10 +32,22 @@
  */
 
 char* sockname = "ChessIPC";
-int depth = 4;
+int depth = 5;
+
+void signal_handler(int signal)
+{
+  switch (signal)
+  {
+    case SIGSEGV:
+      ELOG("Segfault!\n");
+      break;
+  }
+}
 
 int main(int argc, char* argv[])
 {
+
+  signal(SIGSEGV, signal_handler);
 
   // Set up our logger
   LoggerStream streams[] = {
