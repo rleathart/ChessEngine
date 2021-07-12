@@ -18,14 +18,12 @@ int minimax(Board board, size_t depth, s64 alpha, s64 beta,
   t_debug_level_set(DebugLevelNone);
   int best_eval = maximising_player ? -INT_MAX : INT_MAX;
   Board new_board = board;
-  Move* moves;
-  size_t nmoves = 0;
-  board_get_moves_all(board, &moves, &nmoves,
+  Array moves = board_get_moves_all(board,
                       maximising_player ? GetMovesWhite : GetMovesBlack);
 
   int rv = best_eval;
 
-  if (nmoves == 0) // Either checkmate or stalemate
+  if (moves.used == 0) // Either checkmate or stalemate
   {
     if (!is_in_check(board, maximising_player)) // Stalemate
       best_eval = 0;
@@ -41,11 +39,13 @@ int minimax(Board board, size_t depth, s64 alpha, s64 beta,
 
   int best_eval_i = 0;
 
-  for (size_t i = 0; i < nmoves; i++)
+  for (size_t i = 0; i < moves.capacity; i++)
   {
-    Node* new_node = node_new(out_node, moves[i], !maximising_player);
+    if (!array_index_is_allocated(&moves, i))
+      continue;
+    Node* new_node = node_new(out_node, *(Move*)array_get(&moves, i), !maximising_player);
 
-    board_update(&new_board, &(moves[i]));
+    board_update(&new_board, array_get(&moves, i));
     int eval =
         minimax(new_board, depth - 1, alpha, beta, !maximising_player, new_node);
     new_board = board; // Restore board state after trying a move
@@ -66,7 +66,7 @@ int minimax(Board board, size_t depth, s64 alpha, s64 beta,
   }
 
 end:
-  free(moves);
+  array_free(&moves);
 
   out_node->value = best_eval;
   out_node->best_child = best_eval_i;

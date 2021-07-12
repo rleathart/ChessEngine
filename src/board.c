@@ -268,8 +268,6 @@ static int typed_pos_of_checker(Board board, int king_pos,
                                 ChessPiece attacker_type)
 {
   int rv = -1;
-  Move* moves;
-  size_t nmoves;
   bool is_white = board.state[king_pos] & ChessPieceIsWhite;
   attacker_type &= ~ChessPieceIsWhite;
 
@@ -277,10 +275,12 @@ static int typed_pos_of_checker(Board board, int king_pos,
   board.state[king_pos] =
       attacker_type | board.state[king_pos] & ChessPieceIsWhite;
 
-  board_get_moves(board, king_pos, &moves, &nmoves, 0);
-  for (int i = 0; i < nmoves; i++)
+  Array moves = board_get_moves(board, king_pos, 0);
+  for (int i = 0; i < moves.capacity; i++)
   {
-    int frompos = moves[i].to;
+    if (!array_index_is_allocated(&moves, i))
+      continue;
+    int frompos = (*(Move*)array_get(&moves, i)).to;
     if (board.state[frompos] & (attacker_type))
     {
       if (is_white && (board.state[frompos] & ChessPieceIsWhite) == 0)
@@ -296,7 +296,7 @@ static int typed_pos_of_checker(Board board, int king_pos,
     }
   }
 end:
-  free(moves);
+  array_free(&moves);
   return rv;
 }
 
@@ -334,13 +334,11 @@ bool is_in_check(Board board, bool isWhite)
   return position_of_checker(board, isWhite) >= 0;
 }
 
-// @@Document Explain why we take Move**
-// Free moves when finished using it
-void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves,
-                     int flags)
+/// @return Array array of moves
+Array board_get_moves(Board _board, int pos, GetMovesFlags flags)
 {
-  size_t idx = 0;
-  *moves = malloc(27 * sizeof(Move)); // Can be at most 27 moves
+  Array moves;
+  array_new(&moves, 32, sizeof(Move));
 
   u8 pos_88 = topos88(pos);
 
@@ -364,7 +362,10 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves,
       if (tpos_88 & 0x88)
         continue;
       if (!is_self_capture(_board, pos, topos64(tpos_88)))
-        (*moves)[idx++] = move_new(pos, topos64(tpos_88));
+      {
+        Move move = move_new(pos, topos64(tpos_88));
+        array_push(&moves, &move);
+      }
     }
   }
 
@@ -378,7 +379,10 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves,
     if (torank64(pos) == double_move_rank &&
         board[pos + dirsgn * 16] == ChessPieceNone &&
         board[pos + dirsgn * 8] == ChessPieceNone)
-      (*moves)[idx++] = move_new(pos, pos + dirsgn * 16);
+    {
+      Move move = move_new(pos, pos + dirsgn * 16);
+      array_push(&moves, &move);
+    }
 
     int tpos_88 = pos_88 + dirsgn * 16;
 
@@ -395,11 +399,14 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves,
         {
           Move promotion = move_new(pos, topos64(tpos_88));
           promotion.promotion = pieces[i]; // Handle this in board update
-          (*moves)[idx++] = promotion;
+          array_push(&moves, &promotion);
         }
       }
       else
-        (*moves)[idx++] = move_new(pos, topos64(tpos_88));
+      {
+        Move move = move_new(pos, topos64(tpos_88));
+        array_push(&moves, &move);
+      }
     }
 
     int diagonals[] = {15, 17};
@@ -423,11 +430,14 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves,
           {
             Move promotion = move_new(pos, topos64(tpos_88));
             promotion.promotion = pieces[i]; // Handle this in board update
-            (*moves)[idx++] = promotion;
+            array_push(&moves, &promotion);
           }
         }
         else
-          (*moves)[idx++] = move_new(pos, tpos);
+        {
+          Move move = move_new(pos, tpos);
+          array_push(&moves, &move);
+        }
       }
     }
   }
@@ -450,7 +460,8 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves,
       while (!(tpos_88 & 0x88) &&
              !is_self_capture(_board, pos, topos64(tpos_88)))
       {
-        (*moves)[idx++] = move_new(pos, topos64(tpos_88));
+        Move move = move_new(pos, topos64(tpos_88));
+        array_push(&moves, &move);
 
         if (board[topos64(tpos_88)])
           break;
@@ -501,7 +512,10 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves,
       }
 
       if (can_castle)
-        (*moves)[idx++] = move_new(pos, pos + sign * 2);
+      {
+        Move move = move_new(pos, pos + sign * 2);
+        array_push(&moves, &move);
+      }
     }
   }
 
@@ -514,31 +528,26 @@ void board_get_moves(Board _board, int pos, Move** moves, size_t* nmoves,
   if (flags & ConsiderChecks)
   {
     Board board_after = _board;
-    for (int i = 0; i < idx; i++)
+    for (int i = 0; i < moves.capacity; i++)
     {
-      board_update(&board_after, &((*moves)[i]));
+      if (!array_index_is_allocated(&moves, i))
+        continue;
+      board_update(&board_after, array_get(&moves, i));
       if ((position_of_checker(board_after, board[pos] & ChessPieceIsWhite)) >=
           0)
-      {
-        // This move is invalid so shift all elements down one position
-        // (equivalent to removing the item from the array)
-        for (int j = i; j < idx - 1; j++)
-          (*moves)[j] = (*moves)[j + 1];
-        idx--;
-        i--; // Still need to check the rest of the moves
-      }
+        array_remove(&moves, i);
       board_after = _board;
     }
   }
 
 end:
-  *nmoves = idx;
+  return moves;
 }
 
-void board_get_moves_all(Board board, Move** moves, size_t* nmoves, int flags)
+Array board_get_moves_all(Board board, GetMovesAllFlags flags)
 {
-  size_t idx = 0, current_alloc = 64;
-  *moves = malloc(current_alloc * sizeof(**moves));
+  Array moves;
+  array_new(&moves, 64, sizeof(Move));
 
   for (int i = 0; i < 64; i++)
   {
@@ -549,19 +558,15 @@ void board_get_moves_all(Board board, Move** moves, size_t* nmoves, int flags)
       if (board.state[i] & ChessPieceIsWhite)
         continue;
 
-    Move* piece_moves;
     size_t nmoves = 0;
-    board_get_moves(board, i, &piece_moves, &nmoves, ConsiderChecks);
-    for (size_t j = 0; j < nmoves; j++)
+    Array piece_moves = board_get_moves(board, i, ConsiderChecks);
+    for (size_t j = 0; j < piece_moves.capacity; j++)
     {
-      (*moves)[idx++] = piece_moves[j];
-      if (idx == current_alloc)
-      {
-        current_alloc *= 2;
-        *moves = realloc(*moves, current_alloc);
-      }
+      if (!array_index_is_allocated(&piece_moves, j))
+        continue;
+      array_push(&moves, array_get(&piece_moves, j));
     }
-    free(piece_moves);
+    array_free(&piece_moves);
   }
-  *nmoves = idx;
+  return moves;
 }

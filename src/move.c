@@ -32,33 +32,3 @@ bool move_equals(Move move, Move other)
     return true;
   return false;
 }
-
-Move move_get_random(Board board, int flags)
-{
-  Move rv;
-  int pos_64;
-  bool whiteMove = flags & GetMovesWhite;
-  for (;;)
-  {
-    pos_64 = randrange(0, 63);
-    if (board.state[topos88(pos_64)] == ChessPieceNone)
-      continue;
-    if (whiteMove)
-    {
-      if (!(board.state[topos88(pos_64)] & ChessPieceIsWhite))
-        continue;
-    }
-    else
-    {
-      if (board.state[topos88(pos_64)] & ChessPieceIsWhite)
-        continue;
-    }
-
-    Move* moves;
-    size_t nmoves = 0;
-    board_get_moves(board, topos88(pos_64), &moves, &nmoves, 0);
-    if (nmoves == 0)
-      continue;
-    return moves[randrange(0, nmoves - 1)];
-  }
-}

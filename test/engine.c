@@ -13,8 +13,6 @@
 START_TEST(test_pawn_moves)
 {
   Board board;
-  Move* moves;
-  size_t nmoves = 0;
 
   board_new_from_string(&board, "0 0 0 0 0 0 0 0"
                                 "p 0 0 0 0 0 0 0"
@@ -27,9 +25,10 @@ START_TEST(test_pawn_moves)
 
   // Pawn should be able to move 1 or 2 squares forward and capture enemy pawn.
   // It should not wrap around the board to capture the pawn on the other side
-  board_get_moves(board, topos64(0x10), &moves, &nmoves, 0);
+  Array moves = board_get_moves(board, topos64(0x10), 0);
 
   int expected_nmoves = 3;
+  u64 nmoves = moves.used;
   ck_assert_int_eq(nmoves, expected_nmoves);
 
   bool found_moves[expected_nmoves];
@@ -39,11 +38,14 @@ START_TEST(test_pawn_moves)
   int idx = 0;
   for (int i = 0; i < nmoves; i++)
   {
-    if (moves[i].from == topos64(0x10) && moves[i].to == topos64(0x20))
+    if (array_get_as(&moves, i, Move).from == topos64(0x10) &&
+        array_get_as(&moves, i, Move).to == topos64(0x20))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x10) && moves[i].to == topos64(0x30))
+    if (array_get_as(&moves, i, Move).from == topos64(0x10) &&
+        array_get_as(&moves, i, Move).to == topos64(0x30))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x10) && moves[i].to == topos64(0x21))
+    if (array_get_as(&moves, i, Move).from == topos64(0x10) &&
+        array_get_as(&moves, i, Move).to == topos64(0x21))
       found_moves[idx++] = true;
   }
 
@@ -61,8 +63,7 @@ END_TEST
 START_TEST(test_en_passant)
 {
   Board board;
-  Move* moves;
-  size_t nmoves = 0;
+  Array moves;
 
   board_new_from_string(&board, "0 0 0 0 0 0 0 0"
                                 "0 0 0 0 p 0 0 0"
@@ -76,21 +77,25 @@ START_TEST(test_en_passant)
   board_update(&board, &tmp); // Double move black pawn
   ck_assert_int_eq(board.en_passant_tile, topos64(0x24));
 
-  board_get_moves(board, topos64(0x33), &moves, &nmoves, 0);
+  moves = board_get_moves(board, topos64(0x33), 0);
 
   int expected_nmoves = 2;
-  ck_assert_int_eq(nmoves, expected_nmoves);
+  ck_assert_int_eq(moves.used, expected_nmoves);
 
   bool found_moves[expected_nmoves];
   for (int i = 0; i < expected_nmoves; i++)
     found_moves[i] = false;
 
   int idx = 0;
-  for (int i = 0; i < nmoves; i++)
+  for (int i = 0; i < moves.used; i++)
   {
-    if (moves[i].from == topos64(0x33) && moves[i].to == topos64(0x23))
+    if (!array_index_is_allocated(&moves, i))
+      continue;
+    if (array_get_as(&moves, i, Move).from == topos64(0x33) &&
+        array_get_as(&moves, i, Move).to == topos64(0x23))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x33) && moves[i].to == topos64(0x24))
+    if (array_get_as(&moves, i, Move).from == topos64(0x33) &&
+        array_get_as(&moves, i, Move).to == topos64(0x24))
       found_moves[idx++] = true;
   }
 
@@ -102,8 +107,7 @@ END_TEST
 START_TEST(test_knight_moves)
 {
   Board board;
-  Move* moves;
-  size_t nmoves = 0;
+  Array moves;
 
   board_new_from_string(&board, "0 0 0 0 0 0 0 0"
                                 "n 0 0 0 0 0 0 0"
@@ -114,23 +118,28 @@ START_TEST(test_knight_moves)
                                 "0 0 0 0 0 0 0 0"
                                 "0 0 0 0 0 0 0 0");
 
-  board_get_moves(board, topos64(0x10), &moves, &nmoves, 0);
+  moves = board_get_moves(board, topos64(0x10), 0);
 
   int expected_nmoves = 3;
-  ck_assert_int_eq(nmoves, expected_nmoves);
+  ck_assert_int_eq(moves.used, expected_nmoves);
 
   bool found_moves[expected_nmoves];
   for (int i = 0; i < expected_nmoves; i++)
     found_moves[i] = false;
 
   int idx = 0;
-  for (int i = 0; i < nmoves; i++)
+  for (int i = 0; i < moves.capacity; i++)
   {
-    if (moves[i].from == topos64(0x10) && moves[i].to == topos64(0x02))
+    if (!array_index_is_allocated(&moves, i))
+      continue;
+    if (array_get_as(&moves, i, Move).from == topos64(0x10) &&
+        array_get_as(&moves, i, Move).to == topos64(0x02))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x10) && moves[i].to == topos64(0x22))
+    if (array_get_as(&moves, i, Move).from == topos64(0x10) &&
+        array_get_as(&moves, i, Move).to == topos64(0x22))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x10) && moves[i].to == topos64(0x31))
+    if (array_get_as(&moves, i, Move).from == topos64(0x10) &&
+        array_get_as(&moves, i, Move).to == topos64(0x31))
       found_moves[idx++] = true;
   }
 
@@ -145,8 +154,7 @@ END_TEST
 START_TEST(test_castle_moves)
 {
   Board board;
-  Move* moves;
-  size_t nmoves = 0;
+  Array moves;
 
   board_new_from_string(&board, "0 0 0 0 0 0 0 0"
                                 "P r 0 0 0 0 0 0"
@@ -157,35 +165,46 @@ START_TEST(test_castle_moves)
                                 "0 0 0 0 0 0 0 0"
                                 "0 P 0 0 0 0 0 0");
 
-  board_get_moves(board, topos64(0x11), &moves, &nmoves, 0);
+  moves = board_get_moves(board, topos64(0x11), 0);
 
   int expected_nmoves = 9;
-  ck_assert_int_eq(nmoves, expected_nmoves);
+  ck_assert_int_eq(moves.used, expected_nmoves);
 
   bool found_moves[expected_nmoves];
   for (int i = 0; i < expected_nmoves; i++)
     found_moves[i] = false;
 
   int idx = 0;
-  for (int i = 0; i < nmoves; i++)
+  for (int i = 0; i < moves.capacity; i++)
   {
-    if (moves[i].from == topos64(0x11) && moves[i].to == topos64(0x01))
+    if (!array_index_is_allocated(&moves, i))
+      continue;
+    if (array_get_as(&moves, i, Move).from == topos64(0x11) &&
+        array_get_as(&moves, i, Move).to == topos64(0x01))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x11) && moves[i].to == topos64(0x10))
+    if (array_get_as(&moves, i, Move).from == topos64(0x11) &&
+        array_get_as(&moves, i, Move).to == topos64(0x10))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x11) && moves[i].to == topos64(0x12))
+    if (array_get_as(&moves, i, Move).from == topos64(0x11) &&
+        array_get_as(&moves, i, Move).to == topos64(0x12))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x11) && moves[i].to == topos64(0x13))
+    if (array_get_as(&moves, i, Move).from == topos64(0x11) &&
+        array_get_as(&moves, i, Move).to == topos64(0x13))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x11) && moves[i].to == topos64(0x14))
+    if (array_get_as(&moves, i, Move).from == topos64(0x11) &&
+        array_get_as(&moves, i, Move).to == topos64(0x14))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x11) && moves[i].to == topos64(0x15))
+    if (array_get_as(&moves, i, Move).from == topos64(0x11) &&
+        array_get_as(&moves, i, Move).to == topos64(0x15))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x11) && moves[i].to == topos64(0x16))
+    if (array_get_as(&moves, i, Move).from == topos64(0x11) &&
+        array_get_as(&moves, i, Move).to == topos64(0x16))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x11) && moves[i].to == topos64(0x17))
+    if (array_get_as(&moves, i, Move).from == topos64(0x11) &&
+        array_get_as(&moves, i, Move).to == topos64(0x17))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x11) && moves[i].to == topos64(0x21))
+    if (array_get_as(&moves, i, Move).from == topos64(0x11) &&
+        array_get_as(&moves, i, Move).to == topos64(0x21))
       found_moves[idx++] = true;
   }
 
@@ -199,8 +218,7 @@ END_TEST
 START_TEST(test_bishop_moves)
 {
   Board board;
-  Move* moves;
-  size_t nmoves = 0;
+  Array moves;
 
   board_new_from_string(&board, "0 0 0 0 0 0 0 0"
                                 "0 b 0 0 0 0 0 0"
@@ -211,27 +229,34 @@ START_TEST(test_bishop_moves)
                                 "0 0 0 0 0 0 0 0"
                                 "0 0 0 0 0 0 0 0");
 
-  board_get_moves(board, topos64(0x11), &moves, &nmoves, 0);
+  moves = board_get_moves(board, topos64(0x11), 0);
 
   int expected_nmoves = 5;
-  ck_assert_int_eq(nmoves, expected_nmoves);
+  ck_assert_int_eq(moves.used, expected_nmoves);
 
   bool found_moves[expected_nmoves];
   for (int i = 0; i < expected_nmoves; i++)
     found_moves[i] = false;
 
   int idx = 0;
-  for (int i = 0; i < nmoves; i++)
+  for (int i = 0; i < moves.capacity; i++)
   {
-    if (moves[i].from == topos64(0x11) && moves[i].to == topos64(0x00))
+    if (!array_index_is_allocated(&moves, i))
+      continue;
+    if (array_get_as(&moves, i, Move).from == topos64(0x11) &&
+        array_get_as(&moves, i, Move).to == topos64(0x00))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x11) && moves[i].to == topos64(0x02))
+    if (array_get_as(&moves, i, Move).from == topos64(0x11) &&
+        array_get_as(&moves, i, Move).to == topos64(0x02))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x11) && moves[i].to == topos64(0x20))
+    if (array_get_as(&moves, i, Move).from == topos64(0x11) &&
+        array_get_as(&moves, i, Move).to == topos64(0x20))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x11) && moves[i].to == topos64(0x22))
+    if (array_get_as(&moves, i, Move).from == topos64(0x11) &&
+        array_get_as(&moves, i, Move).to == topos64(0x22))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x11) && moves[i].to == topos64(0x33))
+    if (array_get_as(&moves, i, Move).from == topos64(0x11) &&
+        array_get_as(&moves, i, Move).to == topos64(0x33))
       found_moves[idx++] = true;
   }
 
@@ -243,8 +268,7 @@ END_TEST
 START_TEST(test_queen_moves)
 {
   Board board;
-  Move* moves;
-  size_t nmoves = 0;
+  Array moves;
 
   board_new_from_string(&board, "0 0 0 0 0 0 0 0"
                                 "0 q 0 0 0 p 0 P"
@@ -255,39 +279,52 @@ START_TEST(test_queen_moves)
                                 "0 0 0 0 0 0 0 0"
                                 "0 P 0 0 0 0 0 0");
 
-  board_get_moves(board, topos64(0x11), &moves, &nmoves, 0);
+  moves = board_get_moves(board, topos64(0x11), 0);
 
   int expected_nmoves = 11;
-  ck_assert_int_eq(nmoves, expected_nmoves);
+  ck_assert_int_eq(moves.used, expected_nmoves);
 
   bool found_moves[expected_nmoves];
   for (int i = 0; i < expected_nmoves; i++)
     found_moves[i] = false;
 
   int idx = 0;
-  for (int i = 0; i < nmoves; i++)
+  for (int i = 0; i < moves.capacity; i++)
   {
-    if (moves[i].from == topos64(0x11) && moves[i].to == topos64(0x00))
+    if (!array_index_is_allocated(&moves, i))
+      continue;
+    if (array_get_as(&moves, i, Move).from == topos64(0x11) &&
+        array_get_as(&moves, i, Move).to == topos64(0x00))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x11) && moves[i].to == topos64(0x01))
+    if (array_get_as(&moves, i, Move).from == topos64(0x11) &&
+        array_get_as(&moves, i, Move).to == topos64(0x01))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x11) && moves[i].to == topos64(0x02))
+    if (array_get_as(&moves, i, Move).from == topos64(0x11) &&
+        array_get_as(&moves, i, Move).to == topos64(0x02))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x11) && moves[i].to == topos64(0x10))
+    if (array_get_as(&moves, i, Move).from == topos64(0x11) &&
+        array_get_as(&moves, i, Move).to == topos64(0x10))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x11) && moves[i].to == topos64(0x12))
+    if (array_get_as(&moves, i, Move).from == topos64(0x11) &&
+        array_get_as(&moves, i, Move).to == topos64(0x12))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x11) && moves[i].to == topos64(0x13))
+    if (array_get_as(&moves, i, Move).from == topos64(0x11) &&
+        array_get_as(&moves, i, Move).to == topos64(0x13))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x11) && moves[i].to == topos64(0x14))
+    if (array_get_as(&moves, i, Move).from == topos64(0x11) &&
+        array_get_as(&moves, i, Move).to == topos64(0x14))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x11) && moves[i].to == topos64(0x20))
+    if (array_get_as(&moves, i, Move).from == topos64(0x11) &&
+        array_get_as(&moves, i, Move).to == topos64(0x20))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x11) && moves[i].to == topos64(0x21))
+    if (array_get_as(&moves, i, Move).from == topos64(0x11) &&
+        array_get_as(&moves, i, Move).to == topos64(0x21))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x11) && moves[i].to == topos64(0x22))
+    if (array_get_as(&moves, i, Move).from == topos64(0x11) &&
+        array_get_as(&moves, i, Move).to == topos64(0x22))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x11) && moves[i].to == topos64(0x33))
+    if (array_get_as(&moves, i, Move).from == topos64(0x11) &&
+        array_get_as(&moves, i, Move).to == topos64(0x33))
       found_moves[idx++] = true;
   }
 
@@ -299,8 +336,7 @@ END_TEST
 START_TEST(test_king_moves)
 {
   Board board;
-  Move* moves;
-  size_t nmoves = 0;
+  Array moves;
 
   // First just do a simple test for the king moving 1 square
   board_new_from_string(&board, "0 0 k 0 0 0 0 0"
@@ -312,27 +348,32 @@ START_TEST(test_king_moves)
                                 "0 0 0 0 0 0 0 0"
                                 "0 P 0 0 0 0 0 0");
 
-  board_get_moves(board, topos64(0x02), &moves, &nmoves, 0);
+  moves = board_get_moves(board, topos64(0x02), 0);
 
   int expected_nmoves = 5;
-  ck_assert_int_eq(nmoves, expected_nmoves);
+  ck_assert_int_eq(moves.used, expected_nmoves);
 
   bool found_moves[expected_nmoves];
   for (int i = 0; i < expected_nmoves; i++)
     found_moves[i] = false;
 
   int idx = 0;
-  for (int i = 0; i < nmoves; i++)
+  for (int i = 0; i < moves.used; i++)
   {
-    if (moves[i].from == topos64(0x02) && moves[i].to == topos64(0x01))
+    if (array_get_as(&moves, i, Move).from == topos64(0x02) &&
+        array_get_as(&moves, i, Move).to == topos64(0x01))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x02) && moves[i].to == topos64(0x03))
+    if (array_get_as(&moves, i, Move).from == topos64(0x02) &&
+        array_get_as(&moves, i, Move).to == topos64(0x03))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x02) && moves[i].to == topos64(0x11))
+    if (array_get_as(&moves, i, Move).from == topos64(0x02) &&
+        array_get_as(&moves, i, Move).to == topos64(0x11))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x02) && moves[i].to == topos64(0x12))
+    if (array_get_as(&moves, i, Move).from == topos64(0x02) &&
+        array_get_as(&moves, i, Move).to == topos64(0x12))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x02) && moves[i].to == topos64(0x13))
+    if (array_get_as(&moves, i, Move).from == topos64(0x02) &&
+        array_get_as(&moves, i, Move).to == topos64(0x13))
       found_moves[idx++] = true;
   }
 
@@ -346,8 +387,7 @@ END_TEST
 START_TEST(test_castling)
 {
   Board board;
-  Move* moves;
-  size_t nmoves = 0;
+  Array moves;
 
   board_new_from_string(&board, "r 0 0 0 k 0 0 r"
                                 "0 0 0 p p p 0 0"
@@ -358,25 +398,31 @@ START_TEST(test_castling)
                                 "0 0 0 0 0 0 0 0"
                                 "0 0 0 0 0 0 0 0");
 
-  board_get_moves(board, topos64(0x04), &moves, &nmoves, 0);
+  moves = board_get_moves(board, topos64(0x04), 0);
 
   int expected_nmoves = 4;
-  ck_assert_int_eq(nmoves, expected_nmoves);
+  ck_assert_int_eq(moves.used, expected_nmoves);
 
   bool found_moves[expected_nmoves];
   for (int i = 0; i < expected_nmoves; i++)
     found_moves[i] = false;
 
   int idx = 0;
-  for (int i = 0; i < nmoves; i++)
+  for (int i = 0; i < moves.capacity; i++)
   {
-    if (moves[i].from == topos64(0x04) && moves[i].to == topos64(0x03))
+    if (!array_index_is_allocated(&moves, i))
+      continue;
+    if (array_get_as(&moves, i, Move).from == topos64(0x04) &&
+        array_get_as(&moves, i, Move).to == topos64(0x03))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x04) && moves[i].to == topos64(0x05))
+    if (array_get_as(&moves, i, Move).from == topos64(0x04) &&
+        array_get_as(&moves, i, Move).to == topos64(0x05))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x04) && moves[i].to == topos64(0x06))
+    if (array_get_as(&moves, i, Move).from == topos64(0x04) &&
+        array_get_as(&moves, i, Move).to == topos64(0x06))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x04) && moves[i].to == topos64(0x02))
+    if (array_get_as(&moves, i, Move).from == topos64(0x04) &&
+        array_get_as(&moves, i, Move).to == topos64(0x02))
       found_moves[idx++] = true;
   }
 
@@ -395,8 +441,8 @@ START_TEST(test_castling)
   board_update(&board, &tmp);
 
   // We shouldnt be able to castle kingside now
-  board_get_moves(board, topos64(0x04), &moves, &nmoves, 0);
-  ck_assert_int_eq(nmoves, 2);
+  moves = board_get_moves(board, topos64(0x04), 0);
+  ck_assert_int_eq(moves.used, 2);
 
   // We can't castle through check
   board_new_from_string(&board, "r 0 0 0 k 0 0 r"
@@ -408,18 +454,22 @@ START_TEST(test_castling)
                                 "0 0 0 0 0 0 0 0"
                                 "0 0 0 Q 0 0 0 0");
 
-  board_get_moves(board, topos64(0x04), &moves, &nmoves, ConsiderChecks);
+  moves = board_get_moves(board, topos64(0x04), ConsiderChecks);
 
   // Should only be able to castle kingside here
   expected_nmoves = 2;
-  ck_assert_int_eq(nmoves, expected_nmoves);
+  ck_assert_int_eq(moves.used, expected_nmoves);
 
   idx = 0;
-  for (int i = 0; i < nmoves; i++)
+  for (int i = 0; i < moves.capacity; i++)
   {
-    if (moves[i].from == topos64(0x04) && moves[i].to == topos64(0x05))
+    if (!array_index_is_allocated(&moves, i))
+      continue;
+    if (array_get_as(&moves, i, Move).from == topos64(0x04) &&
+        array_get_as(&moves, i, Move).to == topos64(0x05))
       found_moves[idx++] = true;
-    if (moves[i].from == topos64(0x04) && moves[i].to == topos64(0x06))
+    if (array_get_as(&moves, i, Move).from == topos64(0x04) &&
+        array_get_as(&moves, i, Move).to == topos64(0x06))
       found_moves[idx++] = true;
   }
 
@@ -436,9 +486,9 @@ START_TEST(test_castling)
                                 "P P P P B P P P"
                                 "R N B Q K 0 0 R");
 
-  board_get_moves(board, topos64(0x74), &moves, &nmoves, ConsiderChecks);
+  moves = board_get_moves(board, topos64(0x74), ConsiderChecks);
 
-  ck_assert_int_eq(nmoves, 2);
+  ck_assert_int_eq(moves.used, 2);
 }
 END_TEST
 
@@ -446,8 +496,7 @@ END_TEST
 START_TEST(test_pinned_check)
 {
   Board board;
-  Move* moves;
-  size_t nmoves = 0;
+  Array moves;
 
   board_new_from_string(&board, "k 0 0 0 0 0 0 0"
                                 "0 r 0 0 0 0 0 0"
@@ -460,21 +509,20 @@ START_TEST(test_pinned_check)
   for (int i = 0; i < 2; i++)
     board.can_castle_ks[i] = board.can_castle_qs[i] = false;
 
-  board_get_moves(board, topos64(0x44), &moves, &nmoves, ConsiderChecks);
+  moves = board_get_moves(board, topos64(0x44), ConsiderChecks);
 
   int expected_nmoves = 1;
-  ck_assert_int_eq(nmoves, expected_nmoves);
+  ck_assert_int_eq(moves.used, expected_nmoves);
+  array_free(&moves);
   expected_nmoves = 4;
-  board_get_moves(board, topos64(0x71), &moves, &nmoves, ConsiderChecks);
-  ck_assert_int_eq(nmoves, expected_nmoves);
+  moves = board_get_moves(board, topos64(0x71), ConsiderChecks);
+  ck_assert_int_eq(moves.used, expected_nmoves);
 }
 END_TEST
 
 START_TEST(test_starting_moves)
 {
   Board board;
-  Move* moves;
-  size_t nmoves = 0;
 
   board_new_from_string(&board, "r n b q k b n r"
                                 "p p p p p p p p"
@@ -484,17 +532,15 @@ START_TEST(test_starting_moves)
                                 "0 0 0 0 0 0 0 0"
                                 "P P P P P P P P"
                                 "R N B Q K B N R");
-  board_get_moves_all(board, &moves, &nmoves, GetMovesWhite | GetMovesBlack);
+  Array moves = board_get_moves_all(board, GetMovesWhite | GetMovesBlack);
 
-  ck_assert_int_eq(nmoves, 40);
+  ck_assert_int_eq(moves.used, 40);
 }
 END_TEST
 
 START_TEST(test_checkmate)
 {
   Board board;
-  Move* moves;
-  size_t nmoves = 0;
 
   board_new_from_string(&board, "r 0 b 0 k b n r"
                                 "p p p p 0 p p p"
@@ -509,22 +555,21 @@ START_TEST(test_checkmate)
   {
     if (!(board.state[i] & ChessPieceIsWhite))
       continue;
-    board_get_moves(board, i, &moves, &nmoves, ConsiderChecks);
+    Array moves = board_get_moves(board, i, ConsiderChecks);
 
-    fail_if(nmoves != 0, "Found move %s at %d", move_tostring(moves[0]), i);
+    fail_if(moves.used != 0, "Found move %s at %d",
+            move_tostring(array_get_as(&moves, 0, Move)), i);
   }
 }
 END_TEST
 
 void rook_nmoves(Board board, int defending_rook_pos)
 {
-  Move* moves;
-  size_t nmoves;
   int expected_nmoves = 1;
 
-  board_get_moves(board, defending_rook_pos, &moves, &nmoves, ConsiderChecks);
-  ck_assert_int_eq(nmoves, expected_nmoves);
-  free(moves);
+  Array moves = board_get_moves(board, defending_rook_pos, ConsiderChecks);
+  ck_assert_int_eq(moves.used, expected_nmoves);
+  array_free(&moves);
 }
 // Does knight correctly put king in check.
 START_TEST(test_knight_check_king)
@@ -615,8 +660,6 @@ END_TEST
 START_TEST(test_same_move)
 {
   Board board;
-  Move* moves;
-  size_t nmoves = 0;
 
   board_new_from_string(&board, "0 0 0 0 0 r 0 k"
                                 "0 R 0 0 0 0 0 0"
@@ -629,17 +672,22 @@ START_TEST(test_same_move)
   Move tmp = move_new(topos64(0x11), topos64(0x15));
   board_update(&board, &tmp);
 
-  board_get_moves_all(board, &moves, &nmoves, GetMovesBlack | GetMovesWhite);
+  Array moves = board_get_moves_all(board, GetMovesBlack | GetMovesWhite);
 
-  for (int i = 0; i < nmoves; i++)
-    fail_if(moves[i].from == topos64(0x11));
+  for (int i = 0; i < moves.capacity; i++)
+  {
+    if (!array_index_is_allocated(&moves, i))
+      continue;
+    fail_if(array_get_as(&moves, i, Move).from == topos64(0x11));
+  }
 }
 END_TEST
 
 START_TEST(test_parse_fen)
 {
   Board board;
-  board_new(&board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b Kkq 41 45 15");
+  board_new(&board,
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b Kkq 41 45 15");
 
   fail_if(board.can_castle_ks[1] != true);
   fail_if(board.can_castle_qs[1] != false);
@@ -655,8 +703,6 @@ END_TEST
 START_TEST(test_promotion)
 {
   Board board;
-  Move* moves;
-  size_t nmoves;
   int expected_nmoves;
   board_new_from_string(&board, "0 0 0 0 0 0 0 0"
                                 "0 0 0 0 0 0 0 0"
@@ -666,29 +712,39 @@ START_TEST(test_promotion)
                                 "0 n n K 0 0 0 0"
                                 "0 0 0 p p 0 0 0"
                                 "0 0 R 0 0 0 0 0");
-  board_get_moves(board, topos64(0x63), &moves, &nmoves, ConsiderChecks);
+  Array moves = board_get_moves(board, topos64(0x63), ConsiderChecks);
   expected_nmoves = 8; // 4 promotions for each move
-  ck_assert_int_eq(nmoves, expected_nmoves);
+  ck_assert_int_eq(moves.used, expected_nmoves);
 
   int idx = 0;
   bool* found_moves = calloc(expected_nmoves, sizeof(bool));
-  for (int i = 0; i < nmoves; i++)
+  for (int i = 0; i < moves.capacity; i++)
   {
-    if (moves[i].to == topos64(0x72) && moves[i].promotion == ChessPieceKnight)
+    if (!array_index_is_allocated(&moves, i))
+      continue;
+    if (array_get_as(&moves, i, Move).to == topos64(0x72) &&
+        array_get_as(&moves, i, Move).promotion == ChessPieceKnight)
       found_moves[idx++] = true;
-    if (moves[i].to == topos64(0x72) && moves[i].promotion == ChessPieceCastle)
+    if (array_get_as(&moves, i, Move).to == topos64(0x72) &&
+        array_get_as(&moves, i, Move).promotion == ChessPieceCastle)
       found_moves[idx++] = true;
-    if (moves[i].to == topos64(0x72) && moves[i].promotion == ChessPieceBishop)
+    if (array_get_as(&moves, i, Move).to == topos64(0x72) &&
+        array_get_as(&moves, i, Move).promotion == ChessPieceBishop)
       found_moves[idx++] = true;
-    if (moves[i].to == topos64(0x72) && moves[i].promotion == ChessPieceQueen)
+    if (array_get_as(&moves, i, Move).to == topos64(0x72) &&
+        array_get_as(&moves, i, Move).promotion == ChessPieceQueen)
       found_moves[idx++] = true;
-    if (moves[i].to == topos64(0x73) && moves[i].promotion == ChessPieceKnight)
+    if (array_get_as(&moves, i, Move).to == topos64(0x73) &&
+        array_get_as(&moves, i, Move).promotion == ChessPieceKnight)
       found_moves[idx++] = true;
-    if (moves[i].to == topos64(0x73) && moves[i].promotion == ChessPieceCastle)
+    if (array_get_as(&moves, i, Move).to == topos64(0x73) &&
+        array_get_as(&moves, i, Move).promotion == ChessPieceCastle)
       found_moves[idx++] = true;
-    if (moves[i].to == topos64(0x73) && moves[i].promotion == ChessPieceBishop)
+    if (array_get_as(&moves, i, Move).to == topos64(0x73) &&
+        array_get_as(&moves, i, Move).promotion == ChessPieceBishop)
       found_moves[idx++] = true;
-    if (moves[i].to == topos64(0x73) && moves[i].promotion == ChessPieceQueen)
+    if (array_get_as(&moves, i, Move).to == topos64(0x73) &&
+        array_get_as(&moves, i, Move).promotion == ChessPieceQueen)
       found_moves[idx++] = true;
   }
 
@@ -698,7 +754,7 @@ START_TEST(test_promotion)
 
 START_TEST(test_node_copy)
 {
-  Node* root = node_new(NULL, move_new(-1,-1), false);
+  Node* root = node_new(NULL, move_new(-1, -1), false);
   for (int i = 0; i < 20; i++)
   {
     Node* node = node_new(root, move_new(rand() % 8, rand() % 8), true);
@@ -728,33 +784,33 @@ END_TEST
 
 START_TEST(test_can_force_mate)
 {
-  Move* moves;
-  size_t nmoves;
   Board board;
   board_new(&board, "8/8/8/8/7k/8/6qr/K7 w KQkq - 0 1");
 
-  Node* node = node_new(NULL, move_new(57,56), false);
+  Node* node = node_new(NULL, move_new(57, 56), false);
   Tree* tree = tree_new(node, board, 3);
   Move move = search(tree);
   board_update(&board, &move);
 
-  board_get_moves(board, 57, &moves, &nmoves, ConsiderChecks | GetMovesWhite);
-  if (nmoves == 0 && is_in_check(board, true))
+  Array moves = board_get_moves(board, 57, ConsiderChecks);
+  if (moves.used == 0 && is_in_check(board, true))
     return;
 
-  move = move_new(56,57);
+  move = move_new(56, 57);
   board_update(&board, &move);
 
   tree_free(&tree);
-  node = node_new(NULL, move_new(56,57), false);
+  node = node_new(NULL, move_new(56, 57), false);
   tree = tree_new(node, board, 3);
   move = search(tree);
   board_update(&board, &move);
 
-  board_get_moves(board, 57, &moves, &nmoves, ConsiderChecks | GetMovesWhite);
-  fail_unless(nmoves == 0 && is_in_check(board, true));
+  array_free(&moves);
+
+  moves = board_get_moves(board, 57, ConsiderChecks);
+  fail_unless(moves.used == 0 && is_in_check(board, true));
   tree_free(&tree);
-  free(moves);
+  array_free(&moves);
 }
 END_TEST
 

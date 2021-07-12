@@ -82,12 +82,6 @@ typedef struct
   int fullmove_count;
 } Board;
 
-enum
-{
-  GetMovesWhite = 1 << 0,
-  GetMovesBlack = 1 << 1,
-  ConsiderChecks = 1 << 2,
-};
 typedef struct Node Node;
 struct Node
 {

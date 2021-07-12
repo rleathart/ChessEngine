@@ -16,13 +16,13 @@
 #include <assert.h>
 #include <ipc/socket.h>
 #include <math.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <signal.h>
 
 /*
  * ###########################################################################
@@ -38,12 +38,12 @@ void signal_handler(int sig)
 {
   switch (sig)
   {
-    case SIGSEGV:
-      // Need to reset signal handler so we don't get stuck in a loop
-      signal(SIGSEGV, SIG_DFL);
-      // Calling printf in signal handler not allowed but we're crashing anyway
-      ELOG("Segfault!\n");
-      break;
+  case SIGSEGV:
+    // Need to reset signal handler so we don't get stuck in a loop
+    signal(SIGSEGV, SIG_DFL);
+    // Calling printf in signal handler not allowed but we're crashing anyway
+    ELOG("Segfault!\n");
+    break;
   }
 }
 
@@ -107,8 +107,7 @@ int main(int argc, char* argv[])
       message_receive(&mess_in, &sock);
 
       Move move;
-      Move* moves = NULL;
-      size_t nmoves = 0;
+      Array moves;
       Board board_cpy = board;
       switch (mess_in.type)
       {
@@ -118,10 +117,15 @@ int main(int argc, char* argv[])
         mess_out.data = malloc(sizeof(int));
         int response = 0;
         move = *(Move*)mess_in.data;
-        board_get_moves(board, move.from, &moves, &nmoves, ConsiderChecks);
-        for (int i = 0; i < nmoves; i++)
-          if (moves[i].from == move.from && moves[i].to == move.to)
+        moves = board_get_moves(board, move.from, ConsiderChecks);
+        for (int i = 0; i < moves.capacity; i++)
+        {
+          if (!array_index_is_allocated(&moves, i))
+            continue;
+          if (array_get_as(&moves, i, Move).from == move.from &&
+              array_get_as(&moves, i, Move).to == move.to)
             response = 1;
+        }
 
         memcpy(mess_out.data, &response, sizeof(int));
         break;
@@ -162,10 +166,17 @@ int main(int argc, char* argv[])
       case MessageTypeGetMovesRequest:
         mess_out.type = MessageTypeGetMovesReply;
         int pos = *(int*)mess_in.data;
-        board_get_moves(board, pos, &moves, &nmoves, ConsiderChecks);
-        mess_out.len = nmoves * sizeof(Move);
+        moves = board_get_moves(board, pos, ConsiderChecks);
+        mess_out.len = moves.used * sizeof(Move);
         mess_out.data = malloc(mess_out.len);
-        memcpy(mess_out.data, moves, mess_out.len);
+        u64 written = 0;
+        for (int i = 0; i < moves.capacity; i++)
+        {
+          if (!array_index_is_allocated(&moves, i))
+            continue;
+          memcpy(mess_out.data + written, array_get(&moves, i), moves.data_size);
+          written += moves.data_size;
+        }
         break;
 
       // Sets the board from a FEN string
@@ -201,8 +212,7 @@ int main(int argc, char* argv[])
       message_send(mess_out, &sock);
       free(mess_out.data);
       free(mess_in.data);
-      if (moves)
-        free(moves);
+      array_free(&moves);
     }
   }
 
