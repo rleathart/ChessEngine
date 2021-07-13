@@ -6,6 +6,10 @@
 #include <stdio.h>
 #include <limits.h>
 
+// @@FIXME: This is here because it's been removed from librgl (for the time
+// being)
+#define array_get_as(_array, _index, _type) (*(_type *)array_get(_array, _index))
+
 extern int depth;
 
 typedef uint8_t u8;

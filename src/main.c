@@ -53,16 +53,8 @@ int main(int argc, char* argv[])
   signal(SIGSEGV, signal_handler);
 
   // Set up our logger
-  LoggerStream streams[] = {
-      {
-          .stream = stderr,
-      },
-      {
-          .filename = strdup("chess.log"),
-      },
-  };
-  for (int i = 0; i < sizeof(streams) / sizeof(streams[0]); i++)
-    rgl_logger_add_stream(streams[i]);
+  rgl_logger_add_file("chess.log");
+  rgl_logger_add_stream(stderr);
 
   ipcError err = 0;
   Socket sock;
@@ -108,7 +100,7 @@ int main(int argc, char* argv[])
 
       Move move;
       Array moves;
-      array_new(&moves, 0, 0);
+      memset(&moves, 0, sizeof(moves));
       Board board_cpy = board;
       switch (mess_in.type)
       {
