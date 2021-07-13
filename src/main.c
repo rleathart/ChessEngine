@@ -108,6 +108,7 @@ int main(int argc, char* argv[])
 
       Move move;
       Array moves;
+      array_new(&moves, 0, 0);
       Board board_cpy = board;
       switch (mess_in.type)
       {

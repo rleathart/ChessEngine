@@ -140,6 +140,8 @@ int tree_free(Tree** tree)
   return nodes_freed;
 }
 
+// @@FIXME: node_free doesn't update parent properly
+//
 // Free returned pointer by calling node_free. Note: calling this function
 // on an ancestor or related tree will also free this node.
 int node_free(Node** node)
