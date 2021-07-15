@@ -102,6 +102,31 @@ Node* node_new(Node* parent, Move move, bool isWhite)
   return node;
 }
 
+// Selection sort
+void node_order_children(Node* node)
+{
+  bool order_descending = node->isWhite;
+  int i, j, next;
+  for (i = 0; i < node->nchilds - 1; i++)
+  {
+    next = i;
+    for (j = i + 1; j < node->nchilds; j++)
+    {
+        int a = order_descending ? j : next;
+        int b = order_descending ? next : j;
+        if (node->children[a]->value > node->children[b]->value)
+          next = j;
+    }
+    Node* temp = node->children[i];
+    node->children[i] = node->children[next];
+    node->children[next] = temp;
+    if (node->best_child == i)
+      node->best_child = next;
+    if (node->best_child == next)
+      node->best_child = i;
+  }
+}
+
 Move node_get_best_move(Node node)
 {
   return node.children[node.best_child]->move;

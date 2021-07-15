@@ -7,6 +7,11 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include <vcruntime.h>
+#include <pthread.h>
+
+atomic_bool g_player_moved = false;
+atomic_bool g_cancel_search = false;
 
 /// @param out_node non-null
 int minimax(Board board, size_t depth, s64 alpha, s64 beta,
@@ -81,6 +86,7 @@ typedef struct MinimaxSubBoardsArgs
 {
   Tree** trees;
   size_t ntrees;
+  pthread_t thread;
 } MinimaxSubBoardsArgs;
 
 // @@Implement. Call minimax on current board and order the sub-boards based
@@ -90,24 +96,27 @@ void* minimax_sub_boards(void* void_args)
 {
   MinimaxSubBoardsArgs* args = (MinimaxSubBoardsArgs*)void_args;
 
+  printf("args->ntrees: %lld\n", args->ntrees);
   for (int i = 0; i < args->ntrees; i++)
   {
     Tree* tree = args->trees[i];
     tree->is_searching = true;
     printf("analysing this move: %s\n", move_tostring(tree->root->move));
     clock_t start_time = clock();
+    printf("board:\n%s\n", board_tostring(tree->board));
+    printf("depth: %lld\n", tree->depth);
     minimax(tree->board, tree->depth, -INT_MAX, INT_MAX,
         tree->root->isWhite, tree->root);
     clock_t end_time = clock();
     double total_time = (double)(end_time - start_time) / CLOCKS_PER_SEC;
-    printf("Time taken: %f\n\n", total_time);
+    printf("Time taken to analyse move %s: %f\n\n",
+        move_tostring(tree->root->move), total_time);
     tree->is_searching = false;
     if (!g_cancel_search)
       tree->search_complete = true;
     if (g_player_moved)
       break;
   }
-  free(void_args);
   return NULL;
 }
 
@@ -132,27 +141,93 @@ void* minimax_sub_boards(void* void_args)
 // the best moves first. For a CPU with 8 logical cores, this means we
 // run a minimax for the 8 best sub-boards first. once these minimax searches
 // complete, we run the next best 8 sub-boards.
-pthread_t minimax_sub_boards_async(Board board, size_t depth,
-    bool maximising_player, Tree*** out_trees, size_t* nout_trees)
+typedef struct MinimaxSubBoardsAsyncArgs
 {
-  pthread_t thread;
-  Move* moves;
-  size_t nmoves;
-  board_get_moves_all(board, &moves, &nmoves,
-      maximising_player ? GetMovesWhite : GetMovesBlack);
-  *out_trees = malloc(nmoves * sizeof(Tree*));
-  *nout_trees = nmoves;
+  Board board;
+  size_t depth;
+  bool maximising_player;
+  Tree*** out_trees;
+  size_t* out_trees_count;
+  u8 threads;
+} MinimaxSubBoardsAsyncArgs;
+
+void* minimax_sub_boards_async(void* void_args)
+{
+  MinimaxSubBoardsAsyncArgs args = *(MinimaxSubBoardsAsyncArgs*)void_args;
+  Board board = args.board;
+  size_t depth = args.depth;
+  bool maximising_player = args.maximising_player;
+  Tree*** out_trees = args.out_trees;
+  size_t* out_trees_count = args.out_trees_count;
+  const u8 THREADS = args.threads;
+
+  Node* root_player = node_new(NULL, move_new(-1,-1), maximising_player);
+  Tree* tree_player = tree_new(root_player, board, depth);
+  minimax(board, depth, -INT_MAX, INT_MAX, maximising_player, root_player);
+  node_order_children(root_player);
+
+  *out_trees = malloc(root_player->nchilds * sizeof(Tree*));
+  *out_trees_count = root_player->nchilds;
   Tree** trees = *out_trees;
-  for (int i = 0; i < nmoves; i++)
+  printf("root_player->nchilds: %lld\n", root_player->nchilds);
+  for (int i = 0; i < root_player->nchilds; i++)
   {
     Board new_board = board;
-    board_update(&new_board, &moves[i]);
-    Node* root = node_new(NULL, moves[i], !maximising_player);
+    board_update(&new_board, &root_player->children[i]->move);
+    Node* root = node_new(NULL, root_player->children[i]->move, !maximising_player);
     trees[i] = tree_new(root, new_board, depth);
   }
-  MinimaxSubBoardsArgs* args = malloc(sizeof(MinimaxSubBoardsArgs));
-  args->trees = trees;
-  args->ntrees = nmoves;
-  pthread_create(&thread, NULL, minimax_sub_boards, (void*)args);
+
+  MinimaxSubBoardsArgs** msb_args_arr = malloc(THREADS * sizeof(MinimaxSubBoardsArgs*));
+  pthread_t* threads = malloc(THREADS * sizeof(*threads));
+  int trees_count = *out_trees_count;
+  printf("trees_count: %d\n", trees_count);
+  for (int i = 0; i < THREADS; i++)
+  {
+    msb_args_arr[i] = malloc(sizeof(MinimaxSubBoardsArgs));
+    size_t msb_trees_count;
+    if (i >= trees_count % THREADS)
+      msb_trees_count = trees_count / THREADS;
+    else
+      msb_trees_count = trees_count / THREADS + 1;
+    printf("msb_trees_count: %lld\n", msb_trees_count);
+
+    Tree** msb_trees = malloc(msb_trees_count * sizeof(Tree*)); // @@FIXME mem leak here
+    for (int j = 0; j < msb_trees_count; j++)
+    {
+      msb_trees[j] = trees[i + j * THREADS];
+      printf("i + j * THREADS: %d\n", i + j * THREADS);
+    }
+
+    msb_args_arr[i]->trees = msb_trees;
+    msb_args_arr[i]->ntrees = msb_trees_count;
+    MinimaxSubBoardsArgs* test_args = (MinimaxSubBoardsArgs*)(void*)&msb_args_arr[i];
+    pthread_create(&threads[i], NULL, minimax_sub_boards, (void*)msb_args_arr[i]);
+  }
+
+  for (int i = 0; i < THREADS; i++)
+  {
+    pthread_join(threads[i], NULL);
+    free(msb_args_arr[i]);
+  }
+  tree_free(&tree_player);
+  free(msb_args_arr);
+  free(threads);
+  return NULL;
+}
+
+pthread_t minimax_precompute_async(Board board, size_t depth,
+    bool maximising_player, Tree*** out_trees, size_t* out_trees_count, u8 threads)
+{
+  MinimaxSubBoardsAsyncArgs* args = malloc(sizeof(MinimaxSubBoardsAsyncArgs));
+  args->board = board;
+  args->depth = depth;
+  args->maximising_player = maximising_player;
+  args->out_trees = out_trees;
+  args->out_trees_count = out_trees_count;
+  args->threads = threads;
+
+  pthread_t thread;
+  pthread_create(&thread, NULL, minimax_sub_boards_async, args);
   return thread;
 }

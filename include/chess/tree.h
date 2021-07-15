@@ -6,6 +6,7 @@ Node* node_new(Node* parent, Move move, bool isWhite);
 int node_free(Node** node);
 Move node_get_best_move(Node node);
 size_t node_find_depth(Node* node);
+void node_order_children(Node* node);
 
 Tree* tree_new(Node* node, Board board, size_t depth);
 int tree_free(Tree** tree);

@@ -5,6 +5,16 @@
 #include <stdio.h>
 #include <limits.h>
 
+#ifdef _WIN32
+#ifdef chess_EXPORTS
+#define CHESS_EXPORT __declspec(dllexport)
+#else
+#define CHESS_EXPORT __declspec(dllimport)
+#endif
+#else
+#define CHESS_EXPORT
+#endif
+
 extern FILE* logger_fd;
 extern char* logger_filepath;
 

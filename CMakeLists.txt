@@ -24,6 +24,9 @@ find_package(ipc REQUIRED)
 
 include_directories(include)
 
+include_directories(include $ENV{CMAKE_INSTALL_PREFIX}/include)
+link_directories($ENV{CMAKE_INSTALL_PREFIX}/lib)
+
 set(SRC
   src/matrix.c
   src/util.c
@@ -37,14 +40,12 @@ set(SRC
   )
 
 add_library(${PROJECT_NAME} ${SRC})
-target_link_libraries(${PROJECT_NAME} ipc)
+target_link_libraries(${PROJECT_NAME} ipc pthreadVC2)
 
 target_include_directories(${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
     PRIVATE src)
-include_directories(include $ENV{CMAKE_INSTALL_PREFIX}/include)
-link_directories($ENV{CMAKE_INSTALL_PREFIX}/lib)
 install(
   TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}Config
   ARCHIVE DESTINATION lib

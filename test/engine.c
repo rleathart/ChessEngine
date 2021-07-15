@@ -2,7 +2,11 @@
 #include <check.h>
 #include <chess/board.h>
 #include <chess/util.h>
+#include <chess/tree.h>
+#include <chess/search.h>
+
 #include <stdlib.h>
+#include <time.h>
 
 START_TEST(test_pawn_moves)
 {
@@ -646,6 +650,85 @@ START_TEST(test_parse_fen)
 }
 END_TEST
 
+void node_order_test(bool is_white)
+{
+  Node* root = node_new(NULL, move_new(-1,-1), is_white);
+  root->best_child = 0;
+  for (int i = 0; i < 20; i++)
+  {
+    Node* node = node_new(root, move_new(-1,-1), !is_white);
+    node->value = rand() - rand();
+  }
+  node_order_children(root);
+
+  int prev_value = root->children[0]->value;
+  int best_child_index = 0;
+  for (int i = 1; i < root->nchilds; i++)
+  {
+    if (is_white)
+      ck_assert_int_ge(prev_value, root->children[i]->value);
+    if(!is_white)
+      ck_assert_int_ge(root->children[i]->value, prev_value);
+    prev_value = root->children[i]->value;
+
+    if (is_white)
+      if (root->children[i]->value > root->children[best_child_index]->value)
+        best_child_index = i;
+    if(!is_white)
+      if (root->children[i]->value < root->children[best_child_index]->value)
+        best_child_index = i;
+  }
+  ck_assert_int_eq(best_child_index, root->best_child);
+}
+START_TEST(test_node_order_children_ascending)
+{ node_order_test(false); }
+END_TEST
+START_TEST(test_node_order_children_descending)
+{ node_order_test(true); }
+END_TEST
+
+START_TEST(test_minimax_precompute_threading)
+{
+  Board board;
+  board_new(&board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
+  Tree** trees;
+  size_t trees_count;
+  pthread_t thread;
+
+  clock_t start = clock();
+  thread = minimax_precompute_async(board, 3, true, &trees, &trees_count, 4);
+  pthread_join(thread, NULL);
+  clock_t end = clock();
+  double total_async = (double)(end - start) / CLOCKS_PER_SEC;
+
+  Tree** trees2;
+  size_t trees_count2;
+
+  start = clock();
+  thread = minimax_precompute_async(board, 3, true, &trees2, &trees_count2, 1);
+  pthread_join(thread, NULL);
+  end = clock();
+  double total = (double)(end - start) / CLOCKS_PER_SEC;
+
+  printf("Time taken\n");
+  printf("4 threads: %f\n", total_async);
+  printf("1 thread: %f\n", total);
+
+}
+END_TEST
+
+START_TEST(test_get_moves_all)
+{
+  Board board;
+  board_new(&board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
+  size_t moves_count;
+  Move* moves;
+
+  board_get_moves_all(board, &moves, &moves_count, GetMovesWhite);
+  ck_assert_int_eq(20, (int)moves_count);
+}
+END_TEST
+
 int main(int argc, char** argv)
 {
   Suite* s1 = suite_create("Engine");
@@ -672,6 +755,10 @@ int main(int argc, char** argv)
   tcase_add_test(tc1_1, test_bishop_check_king);
   tcase_add_test(tc1_1, test_castle_check_king);
   tcase_add_test(tc1_1, test_pawn_check_king);
+  tcase_add_test(tc1_1, test_node_order_children_ascending);
+  tcase_add_test(tc1_1, test_node_order_children_descending);
+  tcase_add_test(tc1_1, test_minimax_precompute_threading);
+  tcase_add_test(tc1_1, test_get_moves_all);
   suite_add_tcase(s1, tc1_1);
 
   srunner_run_all(sr, CK_ENV);

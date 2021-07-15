@@ -29,9 +29,7 @@
  */
 
 char* sockname = "ChessIPC";
-int depth = 5;
-bool g_player_moved = false;
-bool g_cancel_search = false;
+int depth = 3;
 
 int main(int argc, char* argv[])
 {
@@ -135,8 +133,10 @@ int main(int argc, char* argv[])
           g_player_moved = true;
           Tree* precomp_tree;
           Node* precomp_root;
+          printf("nprecomp_trees: %lld\n", nprecomp_trees);
           for (int i = 0; i < nprecomp_trees; i++)
           {
+            printf("i: %d\n", i);
             if (move_equals(precomp_trees[i]->root->move, client_move))
             {
               precomp_tree = precomp_trees[i];
@@ -179,10 +179,13 @@ int main(int argc, char* argv[])
 
           for (int i = 0; i < nprecomp_trees; i++)
           {
+            printf("main\n");
             tree_free(&precomp_trees[i]);
           }
+          printf("main\n");
           g_player_moved = false;
-          thread = minimax_sub_boards_async(board, depth, true, &precomp_trees, &nprecomp_trees);
+          thread = minimax_precompute_async(board, depth, true, &precomp_trees, &nprecomp_trees, 4);
+          printf("main\n");
           break;
 
         case MessageTypeBoardStateRequest:
