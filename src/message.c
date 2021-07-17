@@ -22,9 +22,10 @@ ipcError message_receive(Message* mess, Socket* sock)
   mess->data = malloc(message_len);
   mess->len = message_len;
 
-  while (socket_read_bytes(sock, mess->data, message_len) ==
-         ipcErrorSocketHasMoreData)
-    sleep_ms(MessageSleepMs);
+  if (mess->len > 0)
+    while (socket_read_bytes(sock, mess->data, message_len) ==
+        ipcErrorSocketHasMoreData)
+      sleep_ms(MessageSleepMs);
   DLOG("Message data (%s) (len: %d): ", messagetype_tostring(mess->type), mess->len);
   for (int i = 0; i < message_len; i++)
     DPRINT("%d ", mess->data[i]);
@@ -42,9 +43,10 @@ ipcError message_send(Message mess, Socket* sock)
                             sizeof(mess.type)) ==
          ipcErrorSocketHasMoreData)
     sleep_ms(MessageSleepMs);
-  while (socket_write_bytes(sock, mess.data, mess.len) ==
-         ipcErrorSocketHasMoreData)
-    sleep_ms(MessageSleepMs);
+  if (mess.len > 0)
+    while (socket_write_bytes(sock, mess.data, mess.len) ==
+        ipcErrorSocketHasMoreData)
+      sleep_ms(MessageSleepMs);
   DLOG("Message data (%s) (len: %d): ", messagetype_tostring(mess.type), mess.len);
   for (int i = 0; i < mess.len; i++)
     DPRINT("%d ", mess.data[i]);
