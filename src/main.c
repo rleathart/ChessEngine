@@ -66,18 +66,6 @@ int main(int argc, char* argv[])
   DLOG("\n%s\n", board_tostring(board));
   bool isWhitesTurn = true;
 
-  Node* root = node_new(NULL, move_new(-1, -1), isWhitesTurn);
-  Tree* tree = tree_new(root, board, depth);
-
-  clock_t start_time = clock();
-  Move best_move = search(tree);
-  clock_t end_time = clock();
-  double total_time = (double)(end_time - start_time) / CLOCKS_PER_SEC;
-  DLOG("Best move: %s\n", move_tostring(best_move));
-  DLOG("Time taken: %f\n\n", total_time);
-
-  int nodes_freed = tree_free(&tree);
-
   for (;;)
   {
     while (socket_connect(&sock))
