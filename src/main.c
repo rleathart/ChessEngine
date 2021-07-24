@@ -53,8 +53,10 @@ int main(int argc, char* argv[])
   signal(SIGSEGV, signal_handler);
 
   // Set up our logger
+  // NOTE: global streams must be set BEFORE calling rgl_logger_thread_setup
   rgl_logger_add_file("chess.log");
   rgl_logger_add_stream(stderr);
+  rgl_logger_thread_setup();
 
   ipcError err = 0;
   Socket sock;
