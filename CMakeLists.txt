@@ -50,10 +50,9 @@ set(SRC
   src/tree.c
   )
 
-set(CHESS_LIBS ipc rgl)
+set(CHESS_LIBS ipc rgl pthread m)
 if(WIN32)
   find_package(pthread REQUIRED)
-  list(APPEND CHESS_LIBS pthread)
 endif()
 
 add_library(${PROJECT_NAME} ${SRC})
