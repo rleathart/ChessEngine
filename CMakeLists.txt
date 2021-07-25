@@ -50,10 +50,14 @@ set(SRC
   src/tree.c
   )
 
-set(CHESS_LIBS ipc rgl pthread m)
 if(WIN32)
   find_package(pthread REQUIRED)
+else()
+  # We don't need to link math on windows
+  set(MATH_LIBRARY_NAME m)
 endif()
+
+set(CHESS_LIBS ipc rgl pthread ${MATH_LIBRARY_NAME})
 
 add_library(${PROJECT_NAME} ${SRC})
 target_link_libraries(${PROJECT_NAME} ${CHESS_LIBS})
