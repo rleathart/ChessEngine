@@ -73,8 +73,8 @@ install(DIRECTORY include/ DESTINATION include)
 install(EXPORT ${PROJECT_NAME}Config DESTINATION lib/cmake/${PROJECT_NAME})
 export(TARGETS ${PROJECT_NAME} FILE ${PROJECT_NAME}Config.cmake)
 
-add_executable(main src/main.c)
-target_link_libraries(main ${PROJECT_NAME} ${CHESS_LIBS})
+add_executable(ChessEngineMain src/main.c)
+target_link_libraries(ChessEngineMain ${PROJECT_NAME} ${CHESS_LIBS})
 
 if (CHESS_BUILD_TESTS)
   include(CTest)
