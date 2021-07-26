@@ -22,6 +22,7 @@ int minimax(Board board, size_t depth, s64 alpha, s64 beta,
                       maximising_player ? GetMovesWhite : GetMovesBlack);
 
   int rv = best_eval;
+  int best_eval_i = 0;
 
   if (moves.used == 0) // Either checkmate or stalemate
   {
@@ -36,8 +37,6 @@ int minimax(Board board, size_t depth, s64 alpha, s64 beta,
     best_eval = evaluate_board(board);
     goto end;
   }
-
-  int best_eval_i = 0;
 
   for (size_t i = 0; i < moves.capacity; i++)
   {
