@@ -541,6 +541,7 @@ Array board_get_moves(Board _board, int pos, GetMovesFlags flags)
   }
 
 end:
+  array_squash(&moves);
   return moves;
 }
 
@@ -568,5 +569,6 @@ Array board_get_moves_all(Board board, GetMovesAllFlags flags)
     }
     array_free(&piece_moves);
   }
+  array_squash(&moves);
   return moves;
 }
