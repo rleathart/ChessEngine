@@ -225,22 +225,6 @@ void board_update(Board* board, Move* move)
       board->en_passant_tile = move->to + (isWhite ? 8 : -8);
 }
 
-Move* board_calculate_line(Board board, int depth, bool maximising_player)
-{
-  Move best_move;
-  Move* line = calloc(depth, sizeof(Move));
-  for (int i = 0; i < depth; i++)
-  {
-    Node* root = node_new(NULL, move_new(-1, -1), maximising_player);
-    minimax(board, depth - i, -INT_MAX, INT_MAX, maximising_player, root);
-    best_move = node_get_best_move(*root);
-    board_update(&board, &best_move);
-    line[i] = best_move;
-    maximising_player = !maximising_player;
-  }
-  return line;
-}
-
 // Checks that we're not doing a self capture.
 static bool is_self_capture(Board board, int origin_pos, int target_pos)
 {

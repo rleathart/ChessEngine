@@ -28,7 +28,5 @@ char* move_tostring(Move move)
 
 bool move_equals(Move move, Move other)
 {
-  if (move.from == other.from && move.to == other.to)
-    return true;
-  return false;
+  return memcmp(&move, &other, sizeof(Move)) == 0;
 }
