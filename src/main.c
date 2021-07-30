@@ -189,7 +189,7 @@ int main(int argc, char* argv[])
         break;
 
       default:
-        WLOG("Unkown message type %d\n", mess_in.type);
+        WLOG("Unknown message type %d\n", mess_in.type);
         break;
       }
 

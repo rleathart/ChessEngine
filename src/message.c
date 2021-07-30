@@ -26,13 +26,10 @@ ipcError message_receive(Message* mess, Socket* sock)
     while (socket_read_bytes(sock, mess->data, message_len) ==
         ipcErrorSocketHasMoreData)
       sleep_ms(MessageSleepMs);
-  DebugLevel old_debug_level = t_debug_level_get();
-  t_debug_level_set(DebugLevelDebug);
   DLOG("Message data (%s) (len: %d): ", messagetype_tostring(mess->type), mess->len);
   for (int i = 0; i < message_len; i++)
     DPRINT("%d ", mess->data[i]);
   DPRINT("\n");
-  t_debug_level_set(old_debug_level);
   return ipcErrorNone;
 }
 
@@ -50,13 +47,10 @@ ipcError message_send(Message mess, Socket* sock)
     while (socket_write_bytes(sock, mess.data, mess.len) ==
         ipcErrorSocketHasMoreData)
       sleep_ms(MessageSleepMs);
-  DebugLevel old_debug_level = t_debug_level_get();
-  t_debug_level_set(DebugLevelDebug);
   DLOG("Message data (%s) (len: %d): ", messagetype_tostring(mess.type), mess.len);
   for (int i = 0; i < mess.len; i++)
     DPRINT("%d ", mess.data[i]);
   DPRINT("\n");
-  t_debug_level_set(old_debug_level);
   return ipcErrorNone;
 }
 
