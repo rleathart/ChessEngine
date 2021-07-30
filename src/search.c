@@ -154,7 +154,7 @@ Move search(Tree* tree)
 
   if (!can_force_mate)
   {
-    int depth = 5;
+    int depth = tree->depth;
     int local_depth = 1;
     int value;
     while (local_depth <= depth)
