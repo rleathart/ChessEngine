@@ -1,3 +1,5 @@
+#include <rgl/logging.h>
+
 #include <chess/tree.h>
 #include <chess/move.h>
 
@@ -146,14 +148,36 @@ int tree_free(Tree** tree)
 // on an ancestor or related tree will also free this node.
 int node_free(Node** node)
 {
-  int children_to_free = (*node)->nchilds;
+  if (!node || !*node)
+    return 0;
+
+  Node* tmp = *node;
+
+  int children_to_free = tmp->nchilds;
   int children_freed = 0;
-  for (int i = 0; i < children_to_free; i++)
-    children_freed += node_free(&((*node)->children[i]));
-  if ((*node)->parent) // @@FIXME Actually remove children from parent
-    (*node)->parent->nchilds--;
-  free((*node)->children);
-  free(*node);
-  *node = NULL;
+  while (tmp->nchilds > 0)
+    // Passing first child of node
+    children_freed += node_free(&(tmp->children[0]));
+
+  if (tmp->parent) // @@FIXME Actually remove children from parent
+  {
+    u64 index = -1;
+    for (u64 i = 0; i < tmp->parent->nchilds; i++)
+      if (*node == tmp->parent->children[i])
+        index = i;
+    for (u64 i = index; i < tmp->parent->nchilds ; i++)
+    {
+      tmp->parent->children[i] = tmp->parent->children[i + 1];
+      if (tmp->parent->best_child == i + 1)
+        tmp->parent->best_child--;
+      if (tmp->parent->best_child == index)
+        tmp->parent->best_child = -1;
+
+    }
+    tmp->parent->nchilds--;
+  }
+  free(tmp->children);
+  free(tmp);
+  /* *node = NULL; */
   return ++children_freed;
 }
