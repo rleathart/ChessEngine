@@ -318,12 +318,9 @@ bool is_in_check(Board board, bool isWhite)
   return position_of_checker(board, isWhite) >= 0;
 }
 
-bool is_in_checkmate(Board board, bool isWhite)
+bool can_move(Board board, bool is_white)
 {
-  if (!is_in_check(board, isWhite))
-    return false;
-
-  Array moves = board_get_moves_all(board, isWhite ? GetMovesWhite : GetMovesBlack);
+  Array moves = board_get_moves_all(board, is_white ? GetMovesWhite : GetMovesBlack);
   if (moves.used != 0)
   {
     array_free(&moves);
@@ -331,6 +328,18 @@ bool is_in_checkmate(Board board, bool isWhite)
   }
   array_free(&moves);
   return true;
+}
+bool is_in_checkmate(Board board, bool is_white)
+{
+  if (!is_in_check(board, is_white))
+    return false;
+  return can_move(board, is_white);
+}
+bool is_in_stalemate(Board board, bool is_white)
+{
+  if (is_in_check(board, is_white))
+    return false;
+  return can_move(board, is_white);
 }
 
 /// @return Array array of moves

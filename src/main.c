@@ -205,6 +205,15 @@ int main(int argc, char* argv[])
         mess_out.data = malloc(mess_out.len);
         mess_out.data[0] = is_in_checkmate(board, is_white);
         break;
+      case MessageTypeIsInStalemateRequest:
+        if (mess_in.len != 1)
+          ELOG("MessageTypeIsInCheckmateRequest does not have length of 1.");
+        is_white = mess_in.data[0];
+        mess_out.type = MessageTypeIsInStalemateReply;
+        mess_out.len = 1;
+        mess_out.data = malloc(mess_out.len);
+        mess_out.data[0] = is_in_stalemate(board, is_white);
+        break;
 
 
       default:
