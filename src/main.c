@@ -188,6 +188,16 @@ int main(int argc, char* argv[])
         ILOG("Board Promotion:\n%s\n", board_tostring(board));
         break;
 
+      case MessageTypeIsInCheckRequest:
+        mess_out.type = MessageTypeIsInCheckReply;
+        mess_out.len = 2;
+        mess_out.data = malloc(mess_out.len);
+
+        mess_out.data[0] = is_in_check(board, true);
+        mess_out.data[1] = is_in_check(board, false);
+        break;
+
+
       default:
         WLOG("Unknown message type %d\n", mess_in.type);
         break;
