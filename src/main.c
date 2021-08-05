@@ -192,9 +192,18 @@ int main(int argc, char* argv[])
         mess_out.type = MessageTypeIsInCheckReply;
         mess_out.len = 2;
         mess_out.data = malloc(mess_out.len);
-
         mess_out.data[0] = is_in_check(board, true);
         mess_out.data[1] = is_in_check(board, false);
+        break;
+
+      case MessageTypeIsInCheckmateRequest:
+        if (mess_in.len != 1)
+          ELOG("MessageTypeIsInCheckmateRequest does not have length of 1.");
+        bool is_white = mess_in.data[0];
+        mess_out.type = MessageTypeIsInCheckmateReply;
+        mess_out.len = 1;
+        mess_out.data = malloc(mess_out.len);
+        mess_out.data[0] = is_in_checkmate(board, is_white);
         break;
 
 

@@ -318,6 +318,21 @@ bool is_in_check(Board board, bool isWhite)
   return position_of_checker(board, isWhite) >= 0;
 }
 
+bool is_in_checkmate(Board board, bool isWhite)
+{
+  if (!is_in_check(board, isWhite))
+    return false;
+
+  Array moves = board_get_moves_all(board, isWhite ? GetMovesWhite : GetMovesBlack);
+  if (moves.used != 0)
+  {
+    array_free(&moves);
+    return false;
+  }
+  array_free(&moves);
+  return true;
+}
+
 /// @return Array array of moves
 Array board_get_moves(Board _board, int pos, GetMovesFlags flags)
 {
