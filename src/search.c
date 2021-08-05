@@ -39,6 +39,13 @@ void node_order_children(Node* node)
   }
 }
 
+// @@Rework Change the rest of search/minimax to use MinimaxOutput rather than
+// node
+typedef struct
+{
+  Node* info_node;
+} MinimaxOutput;
+
 typedef struct
 {
   s64 alpha, beta;
@@ -46,9 +53,9 @@ typedef struct
   bool prune;
 } MinimaxArgs;
 
-/// @param out_node non-null
-int minimax(Board board, u64 depth, bool maximising_player, Node* out_node,
-            MinimaxArgs args)
+/// @param node non-null
+int minimax(Board board, u64 depth, bool maximising_player, Node* node,
+            MinimaxArgs args, MinimaxOutput* output)
 {
   // We don't want to print anything inside minimax
   DebugLevel old_debug_level = t_debug_level_get();
@@ -74,9 +81,9 @@ int minimax(Board board, u64 depth, bool maximising_player, Node* out_node,
   for (int i = 0; i < moves.used; i++)
   {
     bool move_in_tree = false;
-    for (int j = 0; j < out_node->nchilds; j++)
+    for (int j = 0; j < node->nchilds; j++)
     {
-      if (move_equals(*(Move*)array_get(&moves, i), out_node->children[j]->move))
+      if (move_equals(*(Move*)array_get(&moves, i), node->children[j]->move))
       {
         move_in_tree = true;
         break;
@@ -84,36 +91,42 @@ int minimax(Board board, u64 depth, bool maximising_player, Node* out_node,
     }
 
     if (!move_in_tree)
-      node_new(out_node, *(Move*)array_get(&moves, i), !maximising_player);
+      node_new(node, *(Move*)array_get(&moves, i), !maximising_player);
   }
 
   array_free(&moves);
 
-  node_order_children(out_node);
+  node_order_children(node);
 
-  if (out_node->nchilds == 0) // Either checkmate or stalemate
+  if (node->nchilds == 0) // Either checkmate or stalemate
   {
     if (!is_in_check(board, maximising_player)) // Stalemate
       best_eval = 0;
+
+    Node* tmp = node;
+    while (tmp->parent->parent)
+      tmp = tmp->parent;
+
+    output->info_node = node_copy(*tmp);
 
     goto end;
   }
 
   // If moves in tree for current depth, loop over tree moves
 
-  u64 cached_nchilds = out_node->nchilds;
-  for (size_t i = 0; out_node->nchilds > 0 && i < cached_nchilds; i++)
+  u64 cached_nchilds = node->nchilds;
+  for (size_t i = 0; node->nchilds > 0 && i < cached_nchilds; i++)
   {
-    Node* current_node = out_node->children[0];
+    Node* current_node = node->children[0];
     if (!args.prune || depth == args.max_depth)
-      current_node = out_node->children[i];
+      current_node = node->children[i];
 
     Move move = current_node->move;
 
     Board new_board = board;
     board_update(&new_board, &move);
     int eval =
-        minimax(new_board, depth - 1, !maximising_player, current_node, args);
+        minimax(new_board, depth - 1, !maximising_player, current_node, args, output);
     new_board = board; // Restore board state after trying a move
 
     if (args.prune && depth != args.max_depth)
@@ -136,8 +149,8 @@ int minimax(Board board, u64 depth, bool maximising_player, Node* out_node,
   }
 
 end:
-  out_node->value = best_eval;
-  out_node->best_child = best_eval_i;
+  node->value = best_eval;
+  node->best_child = best_eval_i;
 
   t_debug_level_set(old_debug_level);
   return best_eval;
@@ -152,6 +165,7 @@ Move search(Tree* tree)
   static bool can_force_mate = false;
   Move best_move;
 
+  MinimaxOutput output = {};
   if (!can_force_mate)
   {
     int depth = tree->depth;
@@ -169,8 +183,13 @@ Move search(Tree* tree)
           .max_depth = depth,
           .prune = prune,
       };
+
+      // @@Rework If we want to play as black, this 'false' needs to change to
+      // something else
+      output.info_node = node_new(NULL, move_new(-1, -1), false);
+
       value = minimax(tree->board, local_depth++, tree->root->isWhite,
-                      tree->root, args);
+                      tree->root, args, &output);
     }
 
     best_move = node_get_best_move(*tree->root);
@@ -178,9 +197,14 @@ Move search(Tree* tree)
     {
       can_force_mate = true;
       // deep copy tree with root at the chosen move
-      Node* best_child = tree->root->children[tree->root->best_child];
-      checkmate_lines = node_copy(*best_child);
+      /* Node* best_child = tree->root->children[tree->root->best_child]; */
+      /* checkmate_lines = node_copy(*best_child); */
+      checkmate_lines = output.info_node;
       current_node = checkmate_lines;
+    }
+    else
+    {
+      node_free(&output.info_node);
     }
   }
   else
