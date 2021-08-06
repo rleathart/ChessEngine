@@ -58,8 +58,7 @@ int minimax(Board board, u64 depth, bool maximising_player, Node* node,
             MinimaxArgs args, MinimaxOutput* output)
 {
   // We don't want to print anything inside minimax
-  DebugLevel old_debug_level = t_debug_level_get();
-  t_debug_level_set(DebugLevelWarning);
+  t_debug_level_push(DebugLevelWarning);
   int best_eval = maximising_player ? -INT_MAX : INT_MAX;
 
   int rv = best_eval;
@@ -152,7 +151,7 @@ end:
   node->value = best_eval;
   node->best_child = best_eval_i;
 
-  t_debug_level_set(old_debug_level);
+  t_debug_level_pop();
   return best_eval;
 }
 

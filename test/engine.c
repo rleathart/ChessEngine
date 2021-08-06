@@ -816,7 +816,9 @@ END_TEST
 
 int main(int argc, char** argv)
 {
-  t_debug_level_set(DebugLevelError);
+  rgl_logger_thread_setup();
+  rgl_logger_thread_add_stream(stderr);
+  t_debug_level_push(DebugLevelWarning);
 
   Suite* s1 = suite_create("Engine");
   TCase* tc1_1 = tcase_create("Engine");

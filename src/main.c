@@ -47,16 +47,38 @@ void signal_handler(int sig)
   }
 }
 
+static Array g_logger_streams;
+
 int main(int argc, char* argv[])
 {
 
   signal(SIGSEGV, signal_handler);
 
-  // Set up our logger
-  // NOTE: global streams must be set BEFORE calling rgl_logger_thread_setup
-  rgl_logger_add_file("chess.log");
-  rgl_logger_add_stream(stderr);
+  // Set up our logger {{{
+  // We have the global g_logger_streams so that in future it's easier to have
+  // new threads inherit the logger streams that we define here.
   rgl_logger_thread_setup();
+  array_new(&g_logger_streams, 8, sizeof(LoggerStream));
+  // Add new global log streams here
+  LoggerStream streams[] = {
+      {.filename = strdup("chess.log")},
+      {.stream = stderr},
+  };
+  for (int i = 0; i < sizeof(streams) / sizeof(streams[0]); i++)
+    array_push(&g_logger_streams, &streams[i]);
+
+  for (int i = 0; i < g_logger_streams.capacity; i++)
+  {
+    if (!array_index_is_allocated(&g_logger_streams, i))
+      continue;
+
+    LoggerStream stream = *(LoggerStream*)array_get(&g_logger_streams, i);
+    if (stream.filename)
+      rgl_logger_thread_add_file(stream.filename);
+    if (stream.stream)
+      rgl_logger_thread_add_stream(stream.stream);
+  }
+  // }}}
 
   ipcError err = 0;
   Socket sock;
