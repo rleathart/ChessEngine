@@ -39,6 +39,12 @@ typedef enum
   MessageTypeSetBoardReply,
   MessageTypePromotionRequest,
   MessageTypePromotionReply,
+  MessageTypeIsInCheckRequest,
+  MessageTypeIsInCheckReply,
+  MessageTypeIsInCheckmateRequest,
+  MessageTypeIsInCheckmateReply,
+  MessageTypeIsInStalemateRequest,
+  MessageTypeIsInStalemateReply,
   // We need to use this to pad out the enum to make sure it's always
   // sizeof(int)
   __MessageTypeSizeMarker = 1 << (sizeof(int) - 1),

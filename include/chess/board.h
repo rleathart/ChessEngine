@@ -30,3 +30,5 @@ char* board_tostring(Board board);
 Move* board_calculate_line(Board board, int depth, bool maximising_player);
 
 bool is_in_check(Board board, bool isWhite);
+bool is_in_checkmate(Board board, bool isWhite);
+bool is_in_stalemate(Board board, bool isWhite);

@@ -82,6 +82,19 @@ char* messagetype_tostring(MessageType type)
       return "SetBoardReply";
     case MessageTypeSetBoardRequest:
       return "SetBoardRequest";
+    case MessageTypeIsInCheckRequest:
+      return "IsInCheckRequest";
+    case MessageTypeIsInCheckReply:
+      return "IsInCheckReply";
+    case MessageTypeIsInCheckmateRequest:
+      return "IsInCheckmateRequest";
+    case MessageTypeIsInCheckmateReply:
+      return "IsInCheckmateReply";
+    case MessageTypeIsInStalemateRequest:
+      return "IsInStalemateRequest";
+    case MessageTypeIsInStalemateReply:
+      return "IsInStalemateReply";
+
     default:
       break;
   }
