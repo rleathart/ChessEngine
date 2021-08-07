@@ -58,30 +58,34 @@ char* messagetype_tostring(MessageType type)
 {
   switch (type)
   {
-    case MessageTypeLegalMoveReply:
-      return "LegalMoveReply";
     case MessageTypeLegalMoveRequest:
       return "LegalMoveRequest";
-    case MessageTypeMakeMoveReply:
-      return "MakeMoveReply";
+    case MessageTypeLegalMoveReply:
+      return "LegalMoveReply";
     case MessageTypeMakeMoveRequest:
       return "MakeMoveRequest";
-    case MessageTypeBestMoveReply:
-      return "BestMoveReply";
+    case MessageTypeMakeMoveReply:
+      return "MakeMoveReply";
     case MessageTypeBestMoveRequest:
       return "BestMoveRequest";
-    case MessageTypeBoardStateReply:
-      return "BoardStateReply";
+    case MessageTypeBestMoveReply:
+      return "BestMoveReply";
     case MessageTypeBoardStateRequest:
       return "BoardStateRequest";
-    case MessageTypeGetMovesReply:
-      return "GetMovesReply";
+    case MessageTypeBoardStateReply:
+      return "BoardStateReply";
     case MessageTypeGetMovesRequest:
       return "GetMovesRequest";
-    case MessageTypeSetBoardReply:
-      return "SetBoardReply";
+    case MessageTypeGetMovesReply:
+      return "GetMovesReply";
     case MessageTypeSetBoardRequest:
       return "SetBoardRequest";
+    case MessageTypeSetBoardReply:
+      return "SetBoardReply";
+    case MessageTypePromotionRequest:
+      return "PromotionRequest";
+    case MessageTypePromotionReply:
+      return "PromotionReply";
     case MessageTypeIsInCheckRequest:
       return "IsInCheckRequest";
     case MessageTypeIsInCheckReply:
