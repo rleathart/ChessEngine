@@ -50,12 +50,16 @@ typedef enum
   __MessageTypeSizeMarker = 1 << (sizeof(int) - 1),
 } MessageType;
 
+// We don't want the compiler to pad this struct since this would mess up some
+// reads/writes
+#pragma pack(push, 1)
 typedef struct
 {
   u32 len; // Size of data in bytes
   MessageType type;
   byte* data;
 } Message;
+#pragma pack(pop)
 
 typedef enum
 {
