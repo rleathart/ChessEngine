@@ -57,6 +57,7 @@ typedef struct
 {
   u32 len; // Size of data in bytes
   MessageType type;
+  byte guid[16];
   byte* data;
 } Message;
 #pragma pack(pop)

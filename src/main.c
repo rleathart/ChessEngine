@@ -81,8 +81,10 @@ int main(int argc, char* argv[])
   // }}}
 
   ipcError err = 0;
-  Socket sock;
-  socket_init(&sock, get_dotnet_pipe_name("ChessIPC_Messages"), SocketServer);
+  Socket sock_in;
+  Socket sock_out;
+  socket_init(&sock_in, get_dotnet_pipe_name("ChessIPC_Requests"), SocketServer);
+  socket_init(&sock_out, get_dotnet_pipe_name("ChessIPC_Replies"), SocketServer);
 
   Board board;
   board_new(&board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
@@ -92,7 +94,9 @@ int main(int argc, char* argv[])
 
   for (;;)
   {
-    while (socket_connect(&sock))
+    while (socket_connect(&sock_in))
+      sleep_ms(200);
+    while (socket_connect(&sock_out))
       sleep_ms(200);
 
     board_new(&board,
@@ -101,14 +105,14 @@ int main(int argc, char* argv[])
 
     for (;;)
     {
-      if (!socket_is_connected(&sock))
+      if (!socket_is_connected(&sock_in) || !socket_is_connected(&sock_out))
       {
-        DLOG("Error: Socket lost connection\n");
+        ELOG("Socket lost connection\n");
         break;
       }
 
       Message mess_in, mess_out;
-      message_receive(&mess_in, &sock);
+      message_receive(&mess_in, &sock_in);
 
       Move move;
       Array moves;
@@ -243,7 +247,8 @@ int main(int argc, char* argv[])
         break;
       }
 
-      message_send(mess_out, &sock);
+      memcpy(mess_out.guid, mess_in.guid, sizeof(mess_in.guid));
+      message_send(mess_out, &sock_out);
       free(mess_out.data);
       free(mess_in.data);
       array_free(&moves);
