@@ -219,7 +219,7 @@ void* message_handler(void* void_args)
     break;
   }
 
-  memcpy(&mess_out.guid, &mess_in.guid, sizeof(mess_in.guid));
+  memcpy(mess_out.guid, mess_in.guid, sizeof(mess_in.guid));
   message_send(mess_out, &sock_out);
   free(mess_out.data);
   free(mess_in.data);
