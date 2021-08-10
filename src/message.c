@@ -12,22 +12,21 @@ enum
 
 ipcError message_receive(Message* mess, Socket* sock)
 {
-  int message_len = 0;
-  while (socket_read_bytes(sock, &message_len, 4) == ipcErrorSocketHasMoreData)
+  ipcError more_data = ipcErrorSocketHasMoreData;
+
+  int bytes_to_read = sizeof(*mess) - sizeof(mess->data);
+  while (socket_read_bytes(sock, mess, bytes_to_read) == more_data)
     sleep_ms(MessageSleepMs);
 
-  while (socket_read_bytes(sock, &mess->type, 4) == ipcErrorSocketHasMoreData)
-    sleep_ms(MessageSleepMs);
-
-  mess->data = malloc(message_len);
-  mess->len = message_len;
+  mess->data = calloc(mess->len, 1);
 
   if (mess->len > 0)
-    while (socket_read_bytes(sock, mess->data, message_len) ==
-        ipcErrorSocketHasMoreData)
+    while (socket_read_bytes(sock, mess->data, mess->len) == more_data)
       sleep_ms(MessageSleepMs);
-  DLOG("Message data (%s) (len: %d): ", messagetype_tostring(mess->type), mess->len);
-  for (int i = 0; i < message_len; i++)
+
+  DLOG("Message data (%s) (len: %d): ", messagetype_tostring(mess->type),
+       mess->len);
+  for (int i = 0; i < mess->len; i++)
     DPRINT("%d ", mess->data[i]);
   DPRINT("\n");
   return ipcErrorNone;
@@ -35,22 +34,22 @@ ipcError message_receive(Message* mess, Socket* sock)
 
 ipcError message_send(Message mess, Socket* sock)
 {
-  while (socket_write_bytes(sock, &(mess.len),
-                            sizeof(mess.len)) ==
-         ipcErrorSocketHasMoreData)
+  ipcError more_data = ipcErrorSocketHasMoreData;
+
+  int bytes_to_write = sizeof(mess) - sizeof(mess.data);
+  while (socket_write_bytes(sock, &mess, bytes_to_write) == more_data)
     sleep_ms(MessageSleepMs);
-  while (socket_write_bytes(sock, &(mess.type),
-                            sizeof(mess.type)) ==
-         ipcErrorSocketHasMoreData)
-    sleep_ms(MessageSleepMs);
+
   if (mess.len > 0)
-    while (socket_write_bytes(sock, mess.data, mess.len) ==
-        ipcErrorSocketHasMoreData)
+    while (socket_write_bytes(sock, mess.data, mess.len) == more_data)
       sleep_ms(MessageSleepMs);
-  DLOG("Message data (%s) (len: %d): ", messagetype_tostring(mess.type), mess.len);
+
+  DLOG("Message data (%s) (len: %d): ", messagetype_tostring(mess.type),
+       mess.len);
   for (int i = 0; i < mess.len; i++)
     DPRINT("%d ", mess.data[i]);
   DPRINT("\n");
+
   return ipcErrorNone;
 }
 
