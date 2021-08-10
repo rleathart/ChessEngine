@@ -13,13 +13,9 @@ enum
 ipcError message_receive(Message* mess, Socket* sock)
 {
   ipcError more_data = ipcErrorSocketHasMoreData;
-  while (socket_read_bytes(sock, &mess->len, 4) == more_data)
-    sleep_ms(MessageSleepMs);
 
-  while (socket_read_bytes(sock, &mess->type, 4) == more_data)
-    sleep_ms(MessageSleepMs);
-
-  while (socket_read_bytes(sock, &mess->guid, 16) == more_data)
+  int bytes_to_read = sizeof(*mess) - sizeof(mess->data);
+  while (socket_read_bytes(sock, mess, bytes_to_read) == more_data)
     sleep_ms(MessageSleepMs);
 
   mess->data = calloc(mess->len, 1);
@@ -39,13 +35,9 @@ ipcError message_receive(Message* mess, Socket* sock)
 ipcError message_send(Message mess, Socket* sock)
 {
   ipcError more_data = ipcErrorSocketHasMoreData;
-  while (socket_write_bytes(sock, &mess.len, sizeof(mess.len)) == more_data)
-    sleep_ms(MessageSleepMs);
 
-  while (socket_write_bytes(sock, &mess.type, sizeof(mess.type)) == more_data)
-    sleep_ms(MessageSleepMs);
-
-  while (socket_write_bytes(sock, &mess.guid, sizeof(mess.guid)) == more_data)
+  int bytes_to_write = sizeof(mess) - sizeof(mess.data);
+  while (socket_write_bytes(sock, &mess, bytes_to_write) == more_data)
     sleep_ms(MessageSleepMs);
 
   if (mess.len > 0)
