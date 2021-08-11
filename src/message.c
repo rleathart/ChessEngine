@@ -7,7 +7,7 @@
 
 enum
 {
-  MessageSleepMs = 10
+  MessageSleepMs = 1
 };
 
 ipcError message_receive(Message* mess, Socket* sock)
