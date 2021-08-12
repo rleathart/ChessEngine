@@ -97,6 +97,10 @@ char* messagetype_tostring(MessageType type)
       return "IsInStalemateRequest";
     case MessageTypeIsInStalemateReply:
       return "IsInStalemateReply";
+    case MessageTypeCheckInfoRequest:
+      return "CheckInfoRequest";
+    case MessageTypeCheckInfoReply:
+      return "CheckInfoReply";
 
     default:
       break;
