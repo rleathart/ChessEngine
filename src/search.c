@@ -37,6 +37,9 @@ void node_order_children(Node* node)
     if (node->best_child == next)
       node->best_child = i;
   }
+  t_debug_level_push(DebugLevelDebug);
+  DLOG("NODE_BEST_CHILD: %p %d\n", node, node->best_child);
+  t_debug_level_pop();
 }
 
 // @@Rework Change the rest of search/minimax to use MinimaxOutput rather than
@@ -208,12 +211,26 @@ Move search(Tree* tree)
   }
   else
   {
+    bool player_move_found = false;
     for (int i = 0; i < current_node->nchilds; i++)
     {
+      DLOG("tree->root->move: %s\n", move_tostring(tree->root->move));
       if (move_equals(tree->root->move, current_node->children[i]->move))
-        current_node = current_node->children[i];
+        player_move_found = true, current_node = current_node->children[i];
     }
+
+    if (!player_move_found)
+      ELOG("Failed to find player move!\n");
+
+    DLOG("current_node: %p\n", current_node);
+    DLOG("current_node->nchilds: %lld\n", current_node->nchilds);
+    DLOG("current_node->best_child: %d\n", current_node->best_child);
+    DLOG("current_node->move: %s\n", move_tostring(current_node->move));
+    DLOG("current_node->children[0]: %p\n", current_node->children[0]);
+    DLOG("current_node->children[0]->move: %s\n", move_tostring(current_node->children[0]->move));
+    DLOG("current_node->children[0]->value: %d\n", current_node->children[0]->value);
     current_node = current_node->children[current_node->best_child];
+    DLOG("current_node: %p\n", current_node);
     best_move = current_node->move;
     if (current_node->nchilds <= 0)
     {

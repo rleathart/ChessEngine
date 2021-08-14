@@ -176,6 +176,8 @@ int node_free(Node** node)
     }
     tmp->parent->nchilds--;
   }
+
+  DLOG("FREEING_NODE: %p\n", *node);
   free(tmp->children);
   free(tmp);
   /* *node = NULL; */
