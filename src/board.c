@@ -313,6 +313,26 @@ static int position_of_checker(Board board, bool isWhite)
   return frompos;
 }
 
+CheckInfo get_check_info(Board board, bool isWhite)
+{
+  CheckInfo result = CheckInfoNone;
+  Array moves = board_get_moves_all(board, isWhite ? GetMovesWhite : GetMovesBlack);
+  bool can_move = moves.used != 0;
+  bool in_check = is_in_check(board, isWhite);
+
+  if (in_check)
+    result = CheckInfoCheck;
+
+  if (!can_move && in_check)
+    result = CheckInfoCheckmate;
+
+  if (!can_move && !in_check)
+    result = CheckInfoStalemate;
+
+  array_free(&moves);
+  return result;
+}
+
 bool is_in_check(Board board, bool isWhite)
 {
   return position_of_checker(board, isWhite) >= 0;
@@ -321,13 +341,7 @@ bool is_in_check(Board board, bool isWhite)
 bool can_move(Board board, bool is_white)
 {
   Array moves = board_get_moves_all(board, is_white ? GetMovesWhite : GetMovesBlack);
-  if (moves.used != 0)
-  {
-    array_free(&moves);
-    return false;
-  }
-  array_free(&moves);
-  return true;
+  return array_free(&moves), moves.used != 0;
 }
 bool is_in_checkmate(Board board, bool is_white)
 {

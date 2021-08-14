@@ -19,6 +19,14 @@ typedef enum
   GetMovesWhite = 1 << 1,
 } GetMovesAllFlags;
 
+typedef enum
+{
+  CheckInfoNone,
+  CheckInfoCheck,
+  CheckInfoCheckmate,
+  CheckInfoStalemate,
+} CheckInfo;
+
 void board_new(Board* board, char* fen);
 void board_new_from_string(Board* board, char* board_str);
 void board_update(Board* board, Move* move);
@@ -28,6 +36,8 @@ Array board_get_moves_all(Board board, GetMovesAllFlags flags);
 
 char* board_tostring(Board board);
 Move* board_calculate_line(Board board, int depth, bool maximising_player);
+
+CheckInfo get_check_info(Board board, bool isWhite);
 
 bool is_in_check(Board board, bool isWhite);
 bool is_in_checkmate(Board board, bool isWhite);

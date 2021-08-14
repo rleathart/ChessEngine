@@ -214,6 +214,16 @@ void* message_handler(void* void_args)
     mess_out.data[0] = is_in_stalemate(*board, is_white);
     break;
 
+  case MessageTypeCheckInfoRequest:
+    if (mess_in.len != 1)
+      ELOG("MessageTypeCheckInfoRequest does not have length of 1.");
+    is_white = mess_in.data[0];
+    mess_out.type = MessageTypeCheckInfoReply;
+    mess_out.len = 1;
+    mess_out.data = malloc(mess_out.len);
+    mess_out.data[0] = get_check_info(*board, is_white);
+    break;
+
   default:
     WLOG("Unknown message type %d\n", mess_in.type);
     break;
