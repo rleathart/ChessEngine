@@ -33,9 +33,15 @@ void node_order_children(Node* node)
     node->children[i] = node->children[next];
     node->children[next] = temp;
     if (node->best_child == i)
+    {
       node->best_child = next;
+      DLOG("BEST_CHILD: %p %d\n", node, node->best_child);
+    }
     if (node->best_child == next)
+    {
       node->best_child = i;
+      DLOG("BEST_CHILD: %p %d\n", node, node->best_child);
+    }
   }
   t_debug_level_push(DebugLevelDebug);
   DLOG("NODE_BEST_CHILD: %p %d\n", node, node->best_child);
@@ -153,6 +159,7 @@ int minimax(Board board, u64 depth, bool maximising_player, Node* node,
 end:
   node->value = best_eval;
   node->best_child = best_eval_i;
+  DLOG("BEST_CHILD: %p %d\n", node, node->best_child);
 
   t_debug_level_pop();
   return best_eval;
@@ -229,7 +236,10 @@ Move search(Tree* tree)
     DLOG("current_node->children[0]: %p\n", current_node->children[0]);
     DLOG("current_node->children[0]->move: %s\n", move_tostring(current_node->children[0]->move));
     DLOG("current_node->children[0]->value: %d\n", current_node->children[0]->value);
-    current_node = current_node->children[current_node->best_child];
+    if (current_node->nchilds == 1)
+      current_node = current_node->children[0];
+    else
+      current_node = current_node->children[current_node->best_child];
     DLOG("current_node: %p\n", current_node);
     best_move = current_node->move;
     if (current_node->nchilds <= 0)

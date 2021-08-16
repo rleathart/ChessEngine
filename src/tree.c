@@ -87,6 +87,7 @@ Node* node_new(Node* parent, Move move, bool isWhite)
   node->children = NULL;
   node->nchilds = 0;
   node->best_child = -1;
+  DLOG("BEST_CHILD: %p %d\n", node, node->best_child);
   node->move = move;
   node->isWhite = isWhite;
   node->value = -INT_MAX;
@@ -97,7 +98,10 @@ Node* node_new(Node* parent, Move move, bool isWhite)
     parent->children = realloc(parent->children, parent->nchilds * sizeof(Node*));
     parent->children[parent->nchilds - 1] = node;
     if (parent->best_child < 0)
+    {
       parent->best_child = 0;
+      DLOG("BEST_CHILD: %p %d\n", node, node->best_child);
+    }
   }
   return node;
 }
@@ -110,6 +114,7 @@ Node* node_copy_private(Node* parent, Node original)
   copy->parent = parent;
   copy->nchilds = original.nchilds;
   copy->best_child = original.best_child;
+  DLOG("BEST_CHILD: %p %d\n", copy, copy->best_child);
   copy->move = original.move;
   copy->isWhite = original.isWhite;
   copy->value = original.value;
@@ -153,6 +158,7 @@ int node_free(Node** node)
 
   Node* tmp = *node;
 
+  t_debug_level_push(DebugLevelDebug);
   int children_to_free = tmp->nchilds;
   int children_freed = 0;
   while (tmp->nchilds > 0)
@@ -169,17 +175,23 @@ int node_free(Node** node)
     {
       tmp->parent->children[i] = tmp->parent->children[i + 1];
       if (tmp->parent->best_child == i + 1)
+      {
         tmp->parent->best_child--;
+        DLOG("BEST_CHILD: %p %d\n", tmp->parent, tmp->parent->best_child);
+      }
       if (tmp->parent->best_child == index)
+      {
         tmp->parent->best_child = -1;
+        DLOG("BEST_CHILD: %p %d\n", tmp->parent, tmp->parent->best_child);
+      }
 
     }
     tmp->parent->nchilds--;
   }
-
   DLOG("FREEING_NODE: %p\n", *node);
   free(tmp->children);
   free(tmp);
+  t_debug_level_pop();
   /* *node = NULL; */
   return ++children_freed;
 }
