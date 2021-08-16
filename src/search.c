@@ -29,6 +29,7 @@ void node_order_children(Node* node)
       if (node->children[a]->value > node->children[b]->value)
         next = j;
     }
+  t_debug_level_push(DebugLevelDebug);
     Node* temp = node->children[i];
     node->children[i] = node->children[next];
     node->children[next] = temp;
@@ -43,7 +44,6 @@ void node_order_children(Node* node)
       DLOG("BEST_CHILD: %p %d\n", node, node->best_child);
     }
   }
-  t_debug_level_push(DebugLevelDebug);
   DLOG("NODE_BEST_CHILD: %p %d\n", node, node->best_child);
   t_debug_level_pop();
 }
@@ -227,7 +227,10 @@ Move search(Tree* tree)
     }
 
     if (!player_move_found)
+    {
       ELOG("Failed to find player move!\n");
+      getchar();
+    }
 
     DLOG("current_node: %p\n", current_node);
     DLOG("current_node->nchilds: %lld\n", current_node->nchilds);

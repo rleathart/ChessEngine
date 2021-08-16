@@ -82,6 +82,7 @@ Tree* tree_new(Node* node, Board board, size_t depth)
 
 Node* node_new(Node* parent, Move move, bool isWhite)
 {
+  t_debug_level_push(DebugLevelDebug);
   Node* node = malloc(sizeof(Node));
   node->parent = parent;
   node->children = NULL;
@@ -103,6 +104,7 @@ Node* node_new(Node* parent, Move move, bool isWhite)
       DLOG("BEST_CHILD: %p %d\n", node, node->best_child);
     }
   }
+  t_debug_level_pop();
   return node;
 }
 
