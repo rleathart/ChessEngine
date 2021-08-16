@@ -10,11 +10,13 @@
 // New move from 0x88 positions
 Move move_new(int from, int to)
 {
-  Move move = {
-      .from = from,
-      .to = to,
-      .promotion = ChessPieceNone,
-  };
+  // We need to use memset here so that the struct padding garbage doesn't break
+  // move_equals
+  Move move;
+  memset(&move, 0, sizeof(move));
+  move.from = from;
+  move.to = to;
+  move.promotion = ChessPieceNone;
   return move;
 }
 
