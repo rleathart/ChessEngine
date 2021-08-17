@@ -29,23 +29,14 @@ void node_order_children(Node* node)
       if (node->children[a]->value > node->children[b]->value)
         next = j;
     }
-  t_debug_level_push(DebugLevelDebug);
     Node* temp = node->children[i];
     node->children[i] = node->children[next];
     node->children[next] = temp;
     if (node->best_child == i)
-    {
       node->best_child = next;
-      DLOG("BEST_CHILD: %p %d\n", node, node->best_child);
-    }
     if (node->best_child == next)
-    {
       node->best_child = i;
-      DLOG("BEST_CHILD: %p %d\n", node, node->best_child);
-    }
   }
-  DLOG("NODE_BEST_CHILD: %p %d\n", node, node->best_child);
-  t_debug_level_pop();
 }
 
 // @@Rework Change the rest of search/minimax to use MinimaxOutput rather than
@@ -111,12 +102,6 @@ int minimax(Board board, u64 depth, bool maximising_player, Node* node,
     if (!is_in_check(board, maximising_player)) // Stalemate
       best_eval = 0;
 
-    Node* tmp = node;
-    while (tmp->parent->parent)
-      tmp = tmp->parent;
-
-    output->info_node = node_copy(*tmp);
-
     goto end;
   }
 
@@ -159,7 +144,6 @@ int minimax(Board board, u64 depth, bool maximising_player, Node* node,
 end:
   node->value = best_eval;
   node->best_child = best_eval_i;
-  DLOG("BEST_CHILD: %p %d\n", node, node->best_child);
 
   t_debug_level_pop();
   return best_eval;
@@ -169,89 +153,37 @@ end:
 // struct as an argument to handle that. or _Thread_local :D
 Move search(Tree* tree)
 {
-  static Node* checkmate_lines = NULL;
-  static Node* current_node = NULL;
-  static bool can_force_mate = false;
   Move best_move;
 
   MinimaxOutput output = {};
-  if (!can_force_mate)
+  int depth = tree->depth;
+  int local_depth = 1;
+  int value;
+  while (local_depth <= depth)
   {
-    int depth = tree->depth;
-    int local_depth = 1;
-    int value;
-    while (local_depth <= depth)
-    {
-      bool prune = false;
-      if (local_depth == depth)
-        prune = true;
+    bool prune = false;
+    if (local_depth == depth)
+      prune = true;
 
-      MinimaxArgs args = {
-          .alpha = -INT_MAX,
-          .beta = INT_MAX,
-          .max_depth = depth,
-          .prune = prune,
-      };
+    MinimaxArgs args = {
+      .alpha = -INT_MAX,
+      .beta = INT_MAX,
+      .max_depth = depth,
+      .prune = prune,
+    };
 
-      // @@Rework If we want to play as black, this 'false' needs to change to
-      // something else
-      output.info_node = node_new(NULL, move_new(-1, -1), false);
+    // @@Rework If we want to play as black, this 'false' needs to change to
+    // something else
+    output.info_node = node_new(NULL, move_new(-1, -1), false);
 
-      value = minimax(tree->board, local_depth++, tree->root->isWhite,
-                      tree->root, args, &output);
-    }
+    value = minimax(tree->board, local_depth++, tree->root->isWhite,
+        tree->root, args, &output);
 
-    best_move = node_get_best_move(*tree->root);
     if (value == -INT_MAX)
-    {
-      can_force_mate = true;
-      // deep copy tree with root at the chosen move
-      /* Node* best_child = tree->root->children[tree->root->best_child]; */
-      /* checkmate_lines = node_copy(*best_child); */
-      checkmate_lines = output.info_node;
-      current_node = checkmate_lines;
-    }
-    else
-    {
-      node_free(&output.info_node);
-    }
+      break;
   }
-  else
-  {
-    bool player_move_found = false;
-    for (int i = 0; i < current_node->nchilds; i++)
-    {
-      DLOG("tree->root->move: %s\n", move_tostring(tree->root->move));
-      if (move_equals(tree->root->move, current_node->children[i]->move))
-        player_move_found = true, current_node = current_node->children[i];
-    }
 
-    if (!player_move_found)
-    {
-      ELOG("Failed to find player move!\n");
-      getchar();
-    }
-
-    DLOG("current_node: %p\n", current_node);
-    DLOG("current_node->nchilds: %lld\n", current_node->nchilds);
-    DLOG("current_node->best_child: %d\n", current_node->best_child);
-    DLOG("current_node->move: %s\n", move_tostring(current_node->move));
-    DLOG("current_node->children[0]: %p\n", current_node->children[0]);
-    DLOG("current_node->children[0]->move: %s\n", move_tostring(current_node->children[0]->move));
-    DLOG("current_node->children[0]->value: %d\n", current_node->children[0]->value);
-    if (current_node->nchilds == 1)
-      current_node = current_node->children[0];
-    else
-      current_node = current_node->children[current_node->best_child];
-    DLOG("current_node: %p\n", current_node);
-    best_move = current_node->move;
-    if (current_node->nchilds <= 0)
-    {
-      current_node = NULL;
-      can_force_mate = false;
-      node_free(&checkmate_lines);
-    }
-  }
+  best_move = node_get_best_move(*tree->root);
 
   return best_move;
 }
