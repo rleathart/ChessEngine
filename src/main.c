@@ -57,7 +57,6 @@ typedef struct
   Socket sock_in;
   Socket sock_out;
   Move* player_move; // The last move made by the player
-  Task* task;       // Need this so we can free the task memory once we're done.
 } MessageHandlerArgs;
 
 void* message_handler(void* void_args)
@@ -234,7 +233,6 @@ void* message_handler(void* void_args)
   free(mess_out.data);
   free(mess_in.data);
   array_free(&moves);
-  free(args.task);
   free(void_args);
   return NULL;
 }
@@ -313,9 +311,11 @@ int main(int argc, char* argv[])
       args->player_move = &player_move;
       args->sock_in = sock_in;
       args->sock_out = sock_out;
-      args->task = task_new(NULL, message_handler, args);
 
-      threadpool_queue_task(&pool, args->task);
+      Task* handle_message = task_new(NULL, message_handler, args);
+      handle_message->free_on_complete = true;
+
+      threadpool_queue_task(&pool, handle_message);
     }
   }
 
