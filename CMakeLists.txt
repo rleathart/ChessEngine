@@ -50,10 +50,7 @@ set(SRC
   src/tree.c
   )
 
-if(WIN32)
-  find_package(pthread REQUIRED)
-else()
-  # We don't need to link math on windows
+if(NOT WIN32) # We don't need to link math on windows
   set(MATH_LIBRARY_NAME m)
 endif()
 
